@@ -9,15 +9,68 @@ Created on Wed Jul 26 13:56:08 2023
 import cv2
 from mtcnn import MTCNN
 
+def detect_faces_and_display(image_path):
+    # Cargar la imagen que deseas analizar
+    image = cv2.imread(image_path)
+    
+    def apply_scale_augmentation(image, scale_factor):
+        height, width = image.shape[:2]
+        new_height = int(height * scale_factor)
+        new_width = int(width * scale_factor)
+        augmented_image = cv2.resize(image, (new_width, new_height))
+        return augmented_image
+
+    # Aplicar aumento de escala
+    scaled_image = apply_scale_augmentation(image, scale_factor=2)
+
+    # Crear una instancia del detector MTCNN
+    detector = MTCNN()
+
+    # Detectar rostros en la imagen
+    detections = detector.detect_faces(scaled_image)
+
+    # Contar el número de personas detectadas
+    num_personas = len(detections)
+
+    return num_personas, scaled_image, detections
+
+
+
+
+
+
+
+
+
+
+
+
+"""
+import cv2
+from mtcnn import MTCNN
+
 # Cargar la imagen que deseas analizar
-image_path = "normal.jpg"
+image_path = "testimagenes/test11.jpeg"
 image = cv2.imread(image_path)
+
+
+
+def apply_scale_augmentation(image, scale_factor):
+    height, width = image.shape[:2]
+    new_height = int(height * scale_factor)
+    new_width = int(width * scale_factor)
+    augmented_image = cv2.resize(image, (new_width, new_height))
+    return augmented_image
+
+# Aplicar aumento de escala
+scaled_image = apply_scale_augmentation(image, scale_factor=2)
+
 
 # Crear una instancia del detector MTCNN
 detector = MTCNN()
 
 # Detectar rostros en la imagen
-detections = detector.detect_faces(image)
+detections = detector.detect_faces(scaled_image)
 
 # Mostrar a cada persona por separado y contar el número de personas
 num_personas = 0
@@ -27,20 +80,20 @@ num_personas = 0
 for i, detection in enumerate(detections):
     x, y, w, h = detection['box']
     x, y, w, h = int(x), int(y), int(w), int(h)
-    person_image = image[y:y+h, x:x+w]
+    person_image = scaled_image[y:y+h, x:x+w]
     # Dibujar un rectángulo alrededor del rostro detectado en la imagen original
-    cv2.rectangle(image, (x, y), (x+w, y+h), (255, 0, 0), 5)
-    num_personas += 1
+    cv2.rectangle(scaled_image, (x, y), (x+w, y+h), (255, 0, 0), 5)
+
 
 # Mostrar la imagen original con todas las detecciones de forma más pequeña
 cv2.namedWindow('Detected Faces', cv2.WINDOW_NORMAL)
 cv2.resizeWindow('Detected Faces', 800, 600)
-cv2.imshow('Detected Faces', image)
+cv2.imshow('Detected Faces', scaled_image)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 print("Número de personas detectadas:", num_personas)
 
-
+"""
 
 
 

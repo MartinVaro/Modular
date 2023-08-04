@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 # El codigo funciona mejor cuando en el path1 ingresamos la foto con menor cantidad rostros
 
 # Cargar la imagen que deseas analizar
-image1_path = "bycent2.jpg"  #Menos rostros
-image2_path = "bycent1.jpg"  #Mas rostros
+image1_path = "testimagenes/bycent2.jpg"  #Menos rostros
+image2_path = "testimagenes/bycent1.jpg"  #Mas rostros
 image1 = cv2.imread(image1_path)
 image2 = cv2.imread(image2_path)
 
@@ -34,8 +34,8 @@ faces2 = [detection['box'] for detection in detections2]
 unique_faces = []
 
 # Definir los umbrales a utilizar
-thresholds = [0.15, 0.2, 0.25, 0.3]
-
+thresholds = [0.15, 0.2, 0.25, 0.3] #muchas personas
+#thresholds = [0.15, 0.2] #pocas personas
 
 # Definir el tamaño de la imagen de destino que muestra las caras emparejadas
 destination_width = 300
