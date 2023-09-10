@@ -9,6 +9,8 @@ Created on Wed Jul 26 13:56:08 2023
 import cv2
 from mtcnn import MTCNN
 
+
+
 def detect_faces_and_display(image_path):
     # Cargar la imagen que deseas analizar
     image = cv2.imread(image_path)
@@ -21,7 +23,7 @@ def detect_faces_and_display(image_path):
         return augmented_image
 
     # Aplicar aumento de escala
-    scaled_image = apply_scale_augmentation(image, scale_factor=2)
+    scaled_image = apply_scale_augmentation(image, scale_factor=1.75)
 
     # Crear una instancia del detector MTCNN
     detector = MTCNN()
