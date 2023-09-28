@@ -239,3 +239,5 @@ class ConferenceWindow:
         story.extend(content)
         doc.build(story)
         messagebox.showinfo("Archivo Creado", "El archivo PDF se ha creado exitosamente.")
+
+

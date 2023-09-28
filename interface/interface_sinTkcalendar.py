@@ -9,11 +9,6 @@ import tkinter as tk
 from tkinter import ttk
 import sqlite3
 import datetime
-
-import tkinter as tk
-import tkcalendar as tkcal
-from tkcalendar import DateEntry
-
 from PIL import Image, ImageTk
 
 
@@ -90,49 +85,76 @@ class App:
 
 
     def create_buttons_section(self, main_frame):
-       
-        buttons_section_frame = ttk.Frame(main_frame)
-        buttons_section_frame.pack(side=tk.RIGHT)
-
-        # Crear y colocar los botones en la cuadrícula
-        add_button = ttk.Button(buttons_section_frame, text="Agregar")
-        add_button.grid(row=0, column=0, padx=10, pady=10)
-        add_button.grid_configure(columnspan=2)
-        add_button.grid_configure(sticky="ew")
-
-        edit_button = ttk.Button(buttons_section_frame, text="Editar")
-        edit_button.grid(row=2, column=0, padx=10, pady=10)
+        button_frame = ttk.Frame(main_frame)
+        button_frame.pack(side=tk.RIGHT, padx=20, pady=10)
+    
+        add_button = ttk.Button(button_frame, text="Agregar")
+        add_button.pack(pady=5)
+    
+        generate_button = ttk.Button(button_frame, text="Generar")
+        generate_button.pack(pady=5)
+    
+        edit_button = ttk.Button(button_frame, text="Editar")
+        edit_button.pack(pady=5)
         edit_button.config(command=self.edit_button_clicked)
-
-        pdf_button = ttk.Button(buttons_section_frame, text="PDF")
-        pdf_button.grid(row=1, column=0, padx=10, pady=10)
-
-        excel_button = ttk.Button(buttons_section_frame, text="Excel")
-        excel_button.grid(row=1, column=1, padx=5, pady=10)
-
-        delete_button = ttk.Button(buttons_section_frame, text="Eliminar")
-        delete_button.grid(row=2, column=1, padx=5, pady=10)
+    
+        delete_button = ttk.Button(button_frame, text="Eliminar")
+        delete_button.pack(pady=5)
         delete_button.config(command=self.delete_button_clicked)
-
-        filter_button = ttk.Button(buttons_section_frame, text="Filtrar")
-        filter_button.grid(row=3, column=0, padx=10, pady=10)
-        filter_button.config(command=self.filter_button_clicked)
-
-        clean_button = ttk.Button(buttons_section_frame, text="Limpiar")
-        clean_button.grid(row=3, column=1, padx=5, pady=10)
-
-        # Crear un calendario de fecha de inicio
-        start_date_label = ttk.Label(buttons_section_frame, text="Fecha inicio:")
-        start_date_label.grid(row=4, column=0, padx=5, pady=10)
-        self.start_cal = DateEntry(buttons_section_frame, width=8)
-        self.start_cal.grid(row=5, column=0, padx=5, pady=10)
-
-        # Crear un calendario de fecha de finalización
-        end_date_label = ttk.Label(buttons_section_frame, text="Fecha final:")
-        end_date_label.grid(row=4, column=1, padx=5, pady=10)
-        self.end_cal = DateEntry(buttons_section_frame, width=8)
-        self.end_cal.grid(row=5, column=1, padx=5, pady=10)
+    
+        filter_button2 = ttk.Button(button_frame, text="Filtrar")
+        filter_button2.pack(pady=5)
+    
+    
+    
+       
+        # Cuadro para la selección de fechas de inicio
+        date_frame = ttk.Frame(button_frame)
+        date_frame.pack(pady=5)
         
+        # Etiqueta para la fecha de inicio
+        start_date_label = ttk.Label(date_frame, text="Fecha inicio:")
+        start_date_label.grid(row=0, column=0, padx=0)
+        
+        # Etiqueta para el mes de fecha de inicio
+        start_month_label = ttk.Label(date_frame, text="M:")
+        start_month_label.grid(row=1, column=0, padx=0)
+        
+        # Cuadro de selección de mes de fecha de inicio
+        self.start_month_spinbox = ttk.Spinbox(date_frame, from_=1, to=12, width=3)
+        self.start_month_spinbox.grid(row=1, column=1, padx=0)
+        
+        # Etiqueta para el año de fecha de inicio
+        start_year_label = ttk.Label(date_frame, text="A:")
+        start_year_label.grid(row=1, column=2, padx=0)
+        
+        # Cuadro de selección de año de fecha de inicio
+        self.start_year_spinbox = ttk.Spinbox(date_frame, from_=2000, to=2100, width=6)
+        self.start_year_spinbox.grid(row=1, column=3, padx=5)
+        
+        # Etiqueta para la fecha de finalización
+        end_date_label = ttk.Label(date_frame, text="Fecha final:")
+        end_date_label.grid(row=2, column=0, padx=0)
+        
+        # Etiqueta para el mes de fecha de finalización
+        end_month_label = ttk.Label(date_frame, text="M:")
+        end_month_label.grid(row=3, column=0, padx=0)
+        
+        # Cuadro de selección de mes de fecha de finalización
+        self.end_month_spinbox = ttk.Spinbox(date_frame, from_=1, to=12, width=3)
+        self.end_month_spinbox.grid(row=3, column=1, padx=0)
+        
+        # Etiqueta para el año de fecha de finalización
+        end_year_label = ttk.Label(date_frame, text="A:")
+        end_year_label.grid(row=3, column=2, padx=0)
+        
+        # Cuadro de selección de año de fecha de finalización
+        self.end_year_spinbox = ttk.Spinbox(date_frame, from_=2000, to=2100, width=6)
+        self.end_year_spinbox.grid(row=3, column=3, padx=0)
+
+
+
+
     def show_page(self, page):
         # Calcula el índice de inicio y fin para la página actual
         start = page * self.page_size
@@ -234,7 +256,7 @@ class App:
             self.fecha_entry = ttk.Entry(frame)
             self.fecha_entry.insert(0, values[2])  # Llenar con el valor actual
             self.fecha_entry.pack(pady=5, fill="x")
-
+    
             hombres_label = ttk.Label(frame, text="Hombres:")
             hombres_label.pack(pady=5)
             self.hombres_entry = ttk.Entry(frame)
@@ -367,7 +389,6 @@ class App:
             fecha_value_label = ttk.Label(frame, text=values[2])
             fecha_value_label.pack(pady=5)
     
-    
             hombres_label = ttk.Label(frame, text="Hombres:")
             hombres_label.pack(pady=5)
             hombres_value_label = ttk.Label(frame, text=values[4])
@@ -412,40 +433,6 @@ class App:
         # Cerrar la ventana emergente de eliminación
         self.delete_window.destroy()
 
-
-    def filter_button_clicked(self):
-        # Obtener las fechas de inicio y finalización
-        start_date = self.start_cal.get_date()
-        end_date = self.end_cal.get_date()
-
-
-        # Realizar la consulta SQL para obtener los registros en el rango de fechas
-        try:
-            conn = sqlite3.connect("eventos.db")
-            cursor = conn.cursor()
-
-            # Consulta SQL para obtener los registros entre las fechas dadas
-            query = "SELECT id, nombre_evento, fecha_evento, asistentes_hombres, asistentes_mujeres FROM eventos WHERE fecha_evento BETWEEN ? AND ? ORDER BY fecha_evento"
-            cursor.execute(query, (start_date, end_date))
-
-            # Obtener los registros resultantes
-            eventos_filtrados = cursor.fetchall()
-
-            # Cerrar la conexión a la base de datos
-            conn.close()
-            
-            self.data= []
-
-            # Llenar self.data con la información de eventos
-            for evento in eventos_filtrados:
-                self.data.append(evento)
-
-            # Actualizar la tabla con los resultados filtrados
-            self.show_page(self.current_page)
-
-        except sqlite3.Error as e:
-            # Si ocurre un error al conectar o ejecutar la consulta, se capturará aquí
-            print("Error al conectar a la base de datos o ejecutar la consulta:", e)
 
 
 
