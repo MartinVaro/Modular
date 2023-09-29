@@ -16,8 +16,9 @@ from comparison.face_comparison_page import FaceComparison
 
 class TwoPhotosDetectionPage:
        
-    def __init__(self, root, image1, image2, options):
-        self.root = root
+    def __init__(self, Load, image1, image2, options):
+        self.Load = Load
+        self.root = tk.Toplevel()
         self.root.title("Pagina de Deteccion de Rostros de Dos Fotos")
         self.root.geometry("800x600")  # Tamaño de la ventana
         self.root.resizable(False, False)
@@ -33,7 +34,9 @@ class TwoPhotosDetectionPage:
         num_personas_image1, self.scaled_image1, self.detected_faces_image1 = mtcnn.detect_faces_and_display(image1)
         num_personas_image2, self.scaled_image2, self.detected_faces_image2 = mtcnn.detect_faces_and_display(image2)
 
-           
+         
+        self.Load.withdraw()
+
         main_frame = ttk.Frame(self.root)
         main_frame.pack(fill=tk.BOTH, expand=True)
 
@@ -170,7 +173,7 @@ class TwoPhotosDetectionPage:
 
     def go_back(self):
         # Hacer que la ventana anterior vuelva a ser visible
-        self.root.deiconify()
+        self.Load.deiconify()
         # Cerrar la ventana actual
         self.root.destroy()
 
@@ -179,9 +182,8 @@ class TwoPhotosDetectionPage:
 
     def continue_pressed(self):
         # Crear una nueva instancia de la ventana FaceComparison
-        face_comparison_window = tk.Toplevel(self.root)
-        app = FaceComparison(face_comparison_window, self.scaled_image1, self.detected_faces_image1, self.scaled_image2, self.detected_faces_image2, self.selected_option)
-        self.root.withdraw()
+        app = FaceComparison(self.root, self.scaled_image1, self.detected_faces_image1, self.scaled_image2, self.detected_faces_image2, self.selected_option)
+        #self.root.withdraw()
 
     def delete_selected(self):
         

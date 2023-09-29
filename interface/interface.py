@@ -9,22 +9,31 @@ import tkinter as tk
 from tkinter import ttk
 import sqlite3
 import datetime
-
 import tkinter as tk
-import tkcalendar as tkcal
+#import tkcalendar as tkcal
 from tkcalendar import DateEntry
+import openpyxl
+from tkinter import filedialog
+from load.photo_load_page import PhotoLoadPage
 
-from PIL import Image, ImageTk
+"""
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
+from tkinter import filedialog, messagebox
+from reportlab.lib.styles import getSampleStyleSheet
+from io import BytesIO
+import matplotlib.pyplot as plt
 
+"""
 
 class App:
     def __init__(self, root):
         self.root = root
         self.root.title("Event AI")
-        
         self.data = []  # Almacenar los datos de la tabla
         self.page_size = 10  # Tamaño de la página
         self.current_page = 0  # Página actual
+        self.total_pages = 0
         
         # Crear los elementos de la interfaz
         self.create_main_section()
@@ -32,7 +41,6 @@ class App:
         # Mostrar la primera página al inicio
         self.show_page(self.current_page)
         
-
 
     def create_main_section(self):
         main_frame = ttk.Frame(self.root)
@@ -88,6 +96,9 @@ class App:
         last_page_button = ttk.Button(navigation_frame, text=">>", command=self.last_page)
         last_page_button.pack(side=tk.LEFT, padx=10)
 
+        go_to_button = ttk.Button(navigation_frame, text="Ir a Página", command=self.go_to_page)
+        go_to_button.pack(side=tk.LEFT, padx=10)
+
 
     def create_buttons_section(self, main_frame):
        
@@ -99,6 +110,7 @@ class App:
         add_button.grid(row=0, column=0, padx=10, pady=10)
         add_button.grid_configure(columnspan=2)
         add_button.grid_configure(sticky="ew")
+        add_button.config(command=self.open_photo_load_page)
 
         edit_button = ttk.Button(buttons_section_frame, text="Editar")
         edit_button.grid(row=2, column=0, padx=10, pady=10)
@@ -106,9 +118,12 @@ class App:
 
         pdf_button = ttk.Button(buttons_section_frame, text="PDF")
         pdf_button.grid(row=1, column=0, padx=10, pady=10)
+        #pdf_button.config(command=self.pdf_button_clicked)
+        
 
         excel_button = ttk.Button(buttons_section_frame, text="Excel")
         excel_button.grid(row=1, column=1, padx=5, pady=10)
+        excel_button.config(command=self.excel_button_clicked)
 
         delete_button = ttk.Button(buttons_section_frame, text="Eliminar")
         delete_button.grid(row=2, column=1, padx=5, pady=10)
@@ -120,23 +135,25 @@ class App:
 
         clean_button = ttk.Button(buttons_section_frame, text="Limpiar")
         clean_button.grid(row=3, column=1, padx=5, pady=10)
+        clean_button.config(command=self.clear_button_clicked)
 
         # Crear un calendario de fecha de inicio
         start_date_label = ttk.Label(buttons_section_frame, text="Fecha inicio:")
         start_date_label.grid(row=4, column=0, padx=5, pady=10)
-        self.start_cal = DateEntry(buttons_section_frame, width=8)
+        self.start_cal = DateEntry(buttons_section_frame, width=8, date_pattern="dd/MM/yy")
         self.start_cal.grid(row=5, column=0, padx=5, pady=10)
 
         # Crear un calendario de fecha de finalización
         end_date_label = ttk.Label(buttons_section_frame, text="Fecha final:")
         end_date_label.grid(row=4, column=1, padx=5, pady=10)
-        self.end_cal = DateEntry(buttons_section_frame, width=8)
+        self.end_cal = DateEntry(buttons_section_frame, width=8, date_pattern="dd/MM/yy")
         self.end_cal.grid(row=5, column=1, padx=5, pady=10)
         
     def show_page(self, page):
         # Calcula el índice de inicio y fin para la página actual
         start = page * self.page_size
         end = (page + 1) * self.page_size
+        self.total_pages = ((len(self.data) - 1) / self.page_size)+1
 
         # Borra todos los elementos de la tabla
         for item in self.table.get_children():
@@ -164,14 +181,14 @@ class App:
             self.show_page(self.current_page)
 
     def next_page(self):
-        total_pages = (len(self.data) - 1) // self.page_size
-        if self.current_page < total_pages:
+        self.total_pages = (len(self.data) - 1) // self.page_size
+        if self.current_page < self.total_pages:
             self.current_page += 1
             self.show_page(self.current_page)
 
     def last_page(self):
-        total_pages = (len(self.data) - 1) // self.page_size
-        self.current_page = total_pages
+        self.total_pages = (len(self.data) - 1) // self.page_size
+        self.current_page = self.total_pages
         self.show_page(self.current_page)
 
 
@@ -181,7 +198,7 @@ class App:
 
         # Intentar conectar a la base de datos SQLite
         try:
-            conn = sqlite3.connect("eventos.db")
+            conn = sqlite3.connect("database/eventos.db")
             cursor = conn.cursor()
 
             # Realizar una consulta SQL para obtener los registros de la tabla "eventos" para la página actual
@@ -200,7 +217,6 @@ class App:
         except sqlite3.Error as e:
             # Si ocurre un error al conectar o ejecutar la consulta, se capturará aquí
             print("Error al conectar a la base de datos:", e)
-
 
     def edit_button_clicked(self):
         # Obtener la fila seleccionada de la tabla
@@ -251,8 +267,6 @@ class App:
             save_button = ttk.Button(frame, text="Guardar", command=self.save_changes)
             save_button.pack(pady=10)
     
-
-
     def save_changes(self):
         # Obtener los valores modificados
         evento_id = self.evento_id
@@ -307,7 +321,7 @@ class App:
         
         # Actualizar la base de datos con los nuevos valores
         try:
-            conn = sqlite3.connect("eventos.db")
+            conn = sqlite3.connect("database/eventos.db")
             cursor = conn.cursor()
             
             # Construir y ejecutar la sentencia SQL UPDATE
@@ -328,7 +342,6 @@ class App:
         self.show_page(self.current_page)
         # Cerrar la ventana emergente de edición
         self.edit_window.destroy()
-    
     
     def flash_edit_window(self):
         # Hacer que la ventana de edición parpadee
@@ -382,14 +395,13 @@ class App:
             delete_button = ttk.Button(frame, text="Eliminar", command=self.confirm_delete)
             delete_button.pack(pady=10)
 
-    
     def confirm_delete(self):
 
         evento_id = self.evento_id
 
         # Eliminar el evento de la base de datos
         try:
-            conn = sqlite3.connect("eventos.db")
+            conn = sqlite3.connect("database/eventos.db")
             cursor = conn.cursor()
 
             # Construir y ejecutar la sentencia SQL DELETE
@@ -412,7 +424,6 @@ class App:
         # Cerrar la ventana emergente de eliminación
         self.delete_window.destroy()
 
-
     def filter_button_clicked(self):
         # Obtener las fechas de inicio y finalización
         start_date = self.start_cal.get_date()
@@ -421,7 +432,7 @@ class App:
 
         # Realizar la consulta SQL para obtener los registros en el rango de fechas
         try:
-            conn = sqlite3.connect("eventos.db")
+            conn = sqlite3.connect("database/eventos.db")
             cursor = conn.cursor()
 
             # Consulta SQL para obtener los registros entre las fechas dadas
@@ -447,11 +458,186 @@ class App:
             # Si ocurre un error al conectar o ejecutar la consulta, se capturará aquí
             print("Error al conectar a la base de datos o ejecutar la consulta:", e)
 
+    def clear_button_clicked(self):
+        # Restablecer las fechas a sus valores originales
+        self.start_cal.set_date(None)  # Reemplaza 'None' con la fecha inicial predeterminada si la tienes
+        self.end_cal.set_date(None)  # Reemplaza 'None' con la fecha final predeterminada si la tienes
+        
+        self.fill_data_from_database()
+        self.show_page(self.current_page)
 
+    def go_to_page(self):
+        try:
+            page = int(self.page_entry.get()) - 1  # Restamos 1 porque las páginas se cuentan desde 1
+            if 0 <= page < self.total_pages:  # Asegurarse de que la página esté en el rango válido
+                self.show_page(page)
+            else:
+                tk.messagebox.showerror("Error", "Número de página fuera de rango")
+        except ValueError:
+            tk.messagebox.showerror("Error", "Ingrese un número de página válido")
+
+    def excel_button_clicked(self):
+        # Preguntar al usuario la ubicación y nombre del archivo
+        file_path = filedialog.asksaveasfilename(defaultextension=".xlsx", filetypes=[("Excel files", "*.xlsx")], initialfile="EventAI")
+        
+        if file_path:
+            try:
+                # Crear un nuevo libro de trabajo de Excel
+                workbook = openpyxl.Workbook()
+                sheet = workbook.active
+                
+                # Configurar los encabezados
+                headers = ["Evento", "Fecha", "Asistentes", "Hombres", "Mujeres"]
+                sheet.append(headers)
+                
+                # Agregar datos de la tabla a la hoja de Excel
+                for row_data in self.data:
+                    evento, fecha, hombres, mujeres = row_data[1], row_data[2], row_data[3], row_data[4]
+                    asistentes = hombres + mujeres
+                    row = [evento, fecha, asistentes, hombres, mujeres]
+                    sheet.append(row)
+                
+                # Guardar el archivo de Excel en la ubicación proporcionada
+                workbook.save(file_path)
+                
+                tk.messagebox.showinfo("Excel Exportado", f"Los datos se han exportado a '{file_path}'")
+            except Exception as e:
+                tk.messagebox.showerror("Error", f"Error al exportar a Excel: {str(e)}")
+
+
+    def open_photo_load_page(self):
+        # Cuando se presione el botón "Agregar", crea una instancia de PhotoLoadPage
+        self.root.iconify()
+        photo_load_page = PhotoLoadPage(self.root) 
+    
+       
+
+    def run(self):
+        self.root.mainloop()
+
+"""
+
+    def generate_pdf(self, selected_row):
+        try:
+            # Crear un archivo PDF con ReportLab
+            pdf_file = "evento.pdf"
+            c = canvas.Canvas(pdf_file, pagesize=letter)
+    
+            # Extraer los valores de la fila seleccionada
+            id_evento, evento, fecha, asistentes, hombres, mujeres = selected_row
+    
+            # Escribir la información en el PDF
+            c.drawString(100, 750, "ID del Evento: " + str(id_evento))
+            c.drawString(100, 730, "Evento: " + evento)
+            c.drawString(100, 710, "Fecha: " + fecha)
+            c.drawString(100, 690, "Asistentes: " + str(asistentes))
+            c.drawString(100, 670, "Hombres: " + str(hombres))
+            c.drawString(100, 650, "Mujeres: " + str(mujeres))
+    
+            # Guardar y cerrar el archivo PDF
+            c.save()
+    
+            messagebox.showinfo("PDF Generado", f"El archivo PDF '{pdf_file}' se ha generado con éxito.")
+        except Exception as e:
+            messagebox.showerror("Error", f"No se pudo generar el PDF: {str(e)}")
+    
+    # Luego, en tu función de botón PDF, llama a esta función con la fila seleccionada:
+    def pdf_button_clicked(self):
+        selected_item = self.table.selection()
+        if selected_item:
+            selected_row = self.table.item(selected_item)['values']
+            self.generate_pdf(selected_row)
+        else:
+            messagebox.showwarning("Advertencia", "Selecciona una fila antes de generar el PDF.")
+
+
+    def generate_pdf_from_data(self, selected_row):
+        try:
+            
+            # Extraer los valores de la fila seleccionada
+            id_evento, evento, fecha, asistentes, hombres, mujeres = selected_row
+            
+            # Crear un archivo PDF con ReportLab
+            pdf_file =evento.replace(" ", "_").lower() + ".pdf"
+            doc = SimpleDocTemplate(pdf_file, pagesize=letter, leftMargin=36, rightMargin=36, topMargin=54, bottomMargin=54)
+    
+            # Crear un objeto Story para el contenido del PDF
+            story = []
+    
+            # Estilos de texto
+            styles = getSampleStyleSheet()
+            title_style = styles["Title"]
+            normal_style = styles["Normal"]
+    
+            # Agregar el título
+            title = "Informe de Evento"
+            story.append(Paragraph(title, title_style))
+    
+            # Agregar información del evento
+            event_info = [
+                ["Evento:", conference_name],
+                ["Exponente:", speakers_names],
+                ["Lugar del evento:", location],
+                ["Total de asistentes:", str(num_men + num_women)],
+                ["Fecha del evento:", date],
+                ["Hora de inicio:", time],
+            ]
+    
+            # Crear una tabla para mostrar la información del evento
+            event_table = Table(event_info, colWidths=[150, 200])
+            event_table.setStyle(TableStyle([
+                ('FONT', (0, 0), (-1, 0), 'Helvetica-Bold'),  # Fuente negrita para la primera fila
+                ('FONT', (0, 1), (-1, -1), 'Helvetica', 12),  # Fuente tamaño 12 para las otras celdas
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),  # Alineación a la izquierda
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),  # Alineación vertical al centro
+            ]))
+    
+            # Agregar la tabla al Story
+            story.append(event_table)
+    
+            # Crear una gráfica de pastel con Matplotlib
+            data = [num_men, num_women]
+            labels = ["Hombres", "Mujeres"]
+            colors = ['#4C8FD6', '#FF8EB0']
+    
+            plt.figure(figsize=(6, 6))  # Aumentar el tamaño de la gráfica
+            wedges, texts, autotexts = plt.pie(data, labels=labels, colors=colors, autopct=lambda p: '{:.0f} ({:.1f}%)'.format(p * sum(data) / 100, p))
+            plt.title('Distribución de Asistentes', fontsize=14, fontweight='bold')
+    
+            for autotext in autotexts:
+                autotext.set_fontsize(12)  # Tamaño de fuente para los porcentajes
+                autotext.set_color('white')  # Color de fuente en blanco
+    
+            # Guardar la gráfica en un objeto BytesIO
+            buffer = BytesIO()
+            plt.savefig(buffer, format='png')
+            plt.close()
+    
+            # Crear la imagen a partir del contenido del objeto BytesIO
+            pie_chart_image = Image(buffer, width=350, height=350)
+    
+            # Agregar la imagen al Story
+            story.append(pie_chart_image)
+    
+            # Construir el PDF
+            doc.build(story)
+    
+            messagebox.showinfo("PDF Generado", f"El archivo PDF '{pdf_file}' se ha generado con éxito.")
+        except Exception as e:
+            messagebox.showerror("Error", f"No se pudo generar el PDF: {str(e)}")
+
+    
+"""
+
+
+
+"""
 
 if __name__ == "__main__":
     root = tk.Tk()
     app = App(root)
     root.mainloop()
+"""
+
 
 

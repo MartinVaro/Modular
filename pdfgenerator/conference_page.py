@@ -18,8 +18,9 @@ from io import BytesIO
 
 
 class ConferenceWindow:
-    def __init__(self, root, num_men, num_women):
-        self.root = root
+    def __init__(self, Gender, num_men, num_women):
+        self.Gender = Gender
+        self.root = tk.Toplevel()
         self.root.title("Registro de Evento")
         self.root.resizable(False, False)
         #self.root.geometry("800x600")  # Tamaño de la ventana
@@ -116,7 +117,7 @@ class ConferenceWindow:
     
     def go_back(self):
         # Hacer que la ventana anterior vuelva a ser visible
-        self.root.deiconify()
+        self.Gender.deiconify()
         # Cerrar la ventana actual
         self.root.destroy()
     """

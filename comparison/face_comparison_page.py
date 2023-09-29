@@ -14,8 +14,9 @@ import detectionComparador as detect
 from gender_classification.gender_classifier_window import GenderClassifierWindow
 
 class FaceComparison:
-    def __init__(self, root, scaled_image1, detected_faces_image1, scaled_image2, detected_faces_image2, selected_option):
-        self.root = root
+    def __init__(self, Detection, scaled_image1, detected_faces_image1, scaled_image2, detected_faces_image2, selected_option):
+        self.Detection = Detection
+        self.root = tk.Toplevel()
         self.root.title("Pagina de Comparación de Rostros")
         self.root.geometry("800x600")  # Tamaño de la ventana
         self.root.resizable(False, False)
@@ -73,6 +74,8 @@ class FaceComparison:
 
         # Realizar la comparación de rostros y obtener la lista faces_to_show
         self.faces_to_show, self.unique_faces = detect.CompareFaces(scaled_image1, detected_faces_image1, scaled_image2, detected_faces_image2, selected_option)
+
+        self.Detection.withdraw()
 
         # Verificar si no hay rostros emparejados
         if len(self.faces_to_show) == 0:
@@ -151,10 +154,10 @@ class FaceComparison:
         self.checkbox_vars.extend(checkbox_vars) 
 
     def continue_pressed(self):
-        gender_classifier_window = tk.Toplevel(self.root)
-        faces=self.merge_faces_to_unique()
-        app = GenderClassifierWindow(gender_classifier_window, faces)
         self.root.withdraw()
+        faces=self.merge_faces_to_unique()
+        app = GenderClassifierWindow(self.root, faces)
+        
         
     def reclassify_pressed(self):
         
@@ -200,7 +203,7 @@ class FaceComparison:
 
     def go_back(self):
         # Hacer que la ventana anterior vuelva a ser visible
-        self.root.deiconify()
+        self.Detection.deiconify()
         # Cerrar la ventana actual
         self.root.destroy()
 

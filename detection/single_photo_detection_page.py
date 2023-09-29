@@ -13,8 +13,9 @@ import cv2
 from gender_classification.gender_classifier_window import GenderClassifierWindow
 
 class SinglePhotoDetectionPage:
-    def __init__(self, root, image1, options):
-        self.root = root
+    def __init__(self, Load, image1, options):
+        self.Load = Load
+        self.root = tk.Toplevel()
         self.root.title("Pagina de Deteccion de Rostros de una Sola Foto")
         self.root.geometry("800x600")  # Tamaño de la ventana
         self.root.resizable(False, False)
@@ -29,7 +30,8 @@ class SinglePhotoDetectionPage:
         # Llamar a la función de detección de rostros aquí con la ruta de la imagen
         num_personas, self.scaled_image, self.detected_faces = mtcnn.detect_faces_and_display(image1)
 
-
+        self.Load.withdraw()
+        
         main_frame = ttk.Frame(self.root)
         main_frame.pack(fill=tk.BOTH, expand=True)
 
@@ -165,15 +167,17 @@ class SinglePhotoDetectionPage:
     def continue_pressed(self):
 
         # Crear una nueva instancia de la ventana del Clasificador de género
-        gender_classifier_window = tk.Toplevel(self.root)
+        
         if self.images_deleted:
+            self.root.withdraw()
             faces=self.extract_faces(self.scaled_image, self.updated_detected_faces)
-            app = GenderClassifierWindow(gender_classifier_window, faces)
-            self.root.withdraw()
+            app = GenderClassifierWindow(self.root, faces)
+            
         else:
-            faces=self.extract_faces(self.scaled_image, self.detected_faces)
-            app = GenderClassifierWindow(gender_classifier_window, faces)
             self.root.withdraw()
+            faces=self.extract_faces(self.scaled_image, self.detected_faces)
+            app = GenderClassifierWindow(self.root, faces)
+           
 
         
     def count_faces(self, detected_faces):
@@ -181,7 +185,7 @@ class SinglePhotoDetectionPage:
         
     def go_back(self):
         # Hacer que la ventana anterior vuelva a ser visible
-        self.root.deiconify()
+        self.Load.deiconify()
         # Cerrar la ventana actual
         self.root.destroy()
         

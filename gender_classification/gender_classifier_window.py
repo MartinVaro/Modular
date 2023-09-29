@@ -15,8 +15,9 @@ from pdfgenerator.conference_page import ConferenceWindow
 
 
 class GenderClassifierWindow:
-    def __init__(self, root, detected_faces):
-        self.root = root
+    def __init__(self, Detection, detected_faces):
+        self.Detection = Detection
+        self.root = tk.Toplevel()
         self.root.title("Clasificador de Género")    
         self.root.geometry("800x600")  # Tamaño de la ventana
         self.root.resizable(False, False)
@@ -195,9 +196,9 @@ class GenderClassifierWindow:
         
     def continue_pressed(self):
         num_men, num_women, total_people = self.count_genders()
-        conference_page = tk.Toplevel(self.root)
-        app = ConferenceWindow(conference_page, num_men, num_women)
         self.root.withdraw()
+        app = ConferenceWindow(self.root, num_men, num_women)
+        
         
         """
         ruta_mujeres = "faces/woman/"
@@ -218,7 +219,7 @@ class GenderClassifierWindow:
 
     def go_back(self):
         # Hacer que la ventana anterior vuelva a ser visible
-        self.root.deiconify()
+        self.Detection.deiconify()
         # Cerrar la ventana actual
         self.root.destroy()
             
