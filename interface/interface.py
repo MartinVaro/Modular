@@ -9,7 +9,7 @@ import tkinter as tk
 from tkinter import ttk
 import sqlite3
 import datetime
-import tkinter as tk
+#import tkinter as tk
 #import tkcalendar as tkcal
 from tkcalendar import DateEntry
 import openpyxl
@@ -140,13 +140,13 @@ class App:
         # Crear un calendario de fecha de inicio
         start_date_label = ttk.Label(buttons_section_frame, text="Fecha inicio:")
         start_date_label.grid(row=4, column=0, padx=5, pady=10)
-        self.start_cal = DateEntry(buttons_section_frame, width=8, date_pattern="dd/MM/yy")
+        self.start_cal = DateEntry(buttons_section_frame, width=8, date_pattern="yy/MM/dd")
         self.start_cal.grid(row=5, column=0, padx=5, pady=10)
 
         # Crear un calendario de fecha de finalización
         end_date_label = ttk.Label(buttons_section_frame, text="Fecha final:")
         end_date_label.grid(row=4, column=1, padx=5, pady=10)
-        self.end_cal = DateEntry(buttons_section_frame, width=8, date_pattern="dd/MM/yy")
+        self.end_cal = DateEntry(buttons_section_frame, width=8, date_pattern="yy/MM/dd")
         self.end_cal.grid(row=5, column=1, padx=5, pady=10)
         
     def show_page(self, page):

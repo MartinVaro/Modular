@@ -103,7 +103,6 @@ class FaceComparison:
 
     def show_detected_faces(self, frame, faces_to_show):
     
-        
         # Ocultar los widgets actuales en el marco de los rostros emparejados
         for widget in self.frame.winfo_children():
             widget.destroy()
@@ -112,6 +111,7 @@ class FaceComparison:
         row_count = 0
         
         checkbox_vars=[]
+        
         
         # Recorrer la lista de rostros emparejados y mostrar cada rostro en el marco
         for i, (face1, face2) in enumerate(faces_to_show):
@@ -199,6 +199,7 @@ class FaceComparison:
     def merge_faces_to_unique(self):
         for face1, _ in self.faces_to_show:
             self.unique_faces.append(face1)
+        self.faces_to_show=[] #Esta linea evita que existan duplicados al regresar y avanzar
         return self.unique_faces
 
     def go_back(self):
