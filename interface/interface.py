@@ -9,22 +9,12 @@ import tkinter as tk
 from tkinter import ttk
 import sqlite3
 import datetime
-#import tkinter as tk
-#import tkcalendar as tkcal
+from filemaker.file_maker import FileMaker
 from tkcalendar import DateEntry
 import openpyxl
 from tkinter import filedialog
 from load.photo_load_page import PhotoLoadPage
 
-"""
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
-from tkinter import filedialog, messagebox
-from reportlab.lib.styles import getSampleStyleSheet
-from io import BytesIO
-import matplotlib.pyplot as plt
-
-"""
 
 class App:
     def __init__(self, root):
@@ -118,7 +108,7 @@ class App:
 
         pdf_button = ttk.Button(buttons_section_frame, text="PDF")
         pdf_button.grid(row=1, column=0, padx=10, pady=10)
-        #pdf_button.config(command=self.pdf_button_clicked)
+        pdf_button.config(command=self.pdf_button_clicked)
         
 
         excel_button = ttk.Button(buttons_section_frame, text="Excel")
@@ -161,7 +151,7 @@ class App:
 
         # Llena la tabla con los datos de la página actual, calculando "Asistentes"
         for item in self.data[start:end]:
-            id_evento, evento, fecha, hombres, mujeres = item[0], item[1], item[2], item[3], item[4]
+            id_evento, evento, fecha, hombres, mujeres = item[0], item[1], item[4], item[5], item[6]
             asistentes = hombres + mujeres  # Calcula la suma de asistentes
             self.table.insert("", "end", values=(id_evento, evento, fecha, asistentes, hombres, mujeres))
 
@@ -202,8 +192,8 @@ class App:
             cursor = conn.cursor()
 
             # Realizar una consulta SQL para obtener los registros de la tabla "eventos" para la página actual
-            cursor.execute("SELECT id, nombre_evento, fecha_evento, asistentes_hombres, asistentes_mujeres FROM eventos")
-
+            cursor.execute("SELECT id, nombre_evento,  nombres_exponentes, lugar_evento, fecha_evento, asistentes_hombres, asistentes_mujeres FROM eventos")
+           
             # Obtener los registros de la página actual
             eventos = cursor.fetchall()
 
@@ -219,86 +209,135 @@ class App:
             print("Error al conectar a la base de datos:", e)
 
     def edit_button_clicked(self):
+
+
         # Obtener la fila seleccionada de la tabla
         selected_item = self.table.selection()
         if selected_item:
             # Obtener los valores de la fila seleccionada
             selected_row = self.table.item(selected_item)
             values = selected_row['values']
+            evento_id = values[0]
             
-            # Crear una ventana emergente para editar la información
-            self.edit_window = tk.Toplevel(self.root)
-            self.edit_window.title("Editar Evento")
-            self.edit_window.geometry("200x300")  # Establecer el tamaño de la ventana
+            try:
+                # Conectar a la base de datos y obtener información del evento por su ID
+                conn = sqlite3.connect("database/eventos.db")
+                cursor = conn.cursor()
     
-            # Personalizar el estilo de la ventana emergente
-            self.edit_window.configure(bg="white")  # Cambiar el fondo a blanco
+                # Realizar una consulta para obtener información del evento por su ID
+                query =" SELECT nombre_evento, nombres_exponentes, lugar_evento, fecha_evento, asistentes_hombres, asistentes_mujeres FROM eventos WHERE id = ?"
+                cursor.execute(query, (evento_id,))
+                event_data = cursor.fetchone()
     
-            # Agregar un marco para un diseño más elegante
-            frame = ttk.Frame(self.edit_window)
-            frame.pack(expand=True, fill="both")
+                # Cerrar la conexión a la base de datos
+                conn.close()
     
-            evento_label = ttk.Label(frame, text="Evento:")
-            evento_label.pack(pady=5)
-            self.evento_id=values[0]
-            self.evento_entry = ttk.Entry(frame)
-            self.evento_entry.insert(0, values[1])  # Llenar con el valor actual
-            self.evento_entry.pack(pady=5, fill="x")
+ 
+                # Desempaquetar los datos del evento
+                conference_name, speakers_names, location, date, num_men, num_women = event_data
+                
+                # Crear una ventana emergente para editar la información
+                self.edit_window = tk.Toplevel(self.root)
+                self.edit_window.title("Editar Evento")
+                self.edit_window.geometry("250x425")  # Establecer el tamaño de la ventana
+        
+                # Personalizar el estilo de la ventana emergente
+                self.edit_window.configure(bg="white")  # Cambiar el fondo a blanco
+                frame = ttk.Frame(self.edit_window)
+                frame.pack(expand=True, fill="both")
+        
+                # Etiqueta y entrada para el nombre del evento
+                evento_label = ttk.Label(frame, text="Evento:")
+                evento_label.pack(pady=5)
+                self.evento_entry = ttk.Entry(frame)
+                self.evento_entry.insert(0, conference_name)  # Llenar con el valor actual
+                self.evento_entry.pack(pady=5, fill="x")
     
-            fecha_label = ttk.Label(frame, text="Fecha:")
-            fecha_label.pack(pady=5)
-            self.fecha_entry = ttk.Entry(frame)
-            self.fecha_entry.insert(0, values[2])  # Llenar con el valor actual
-            self.fecha_entry.pack(pady=5, fill="x")
+    
+                # Etiqueta y entrada para el nombre de los exponentes
+                exponentes_label = ttk.Label(frame, text="Exponentes:")
+                exponentes_label.pack(pady=5)
+                self.exponentes_entry = ttk.Entry(frame)
+                self.exponentes_entry.insert(0, speakers_names)  # Llenar con el valor actual
+                self.exponentes_entry.pack(pady=5, fill="x")
+    
+    
+                # Etiqueta y entrada para la ubicación
+                ubicacion_label = ttk.Label(frame, text="Ubicación:")
+                ubicacion_label.pack(pady=5)
+                self.ubicacion_entry = ttk.Entry(frame)
+                self.ubicacion_entry.insert(0, location)  # Llenar con el valor actual
+                self.ubicacion_entry.pack(pady=5, fill="x")
+                
+                # Etiqueta y entrada para la fecha
+                fecha_label = ttk.Label(frame, text="Fecha:")
+                fecha_label.pack(pady=5)
+                self.fecha_entry = ttk.Entry(frame)
+                self.fecha_entry.insert(0, date)  # Llenar con el valor actual
+                self.fecha_entry.pack(pady=5, fill="x")
+    
+                # Etiqueta y entrada para la cantidad de hombres
+                hombres_label = ttk.Label(frame, text="Hombres:")
+                hombres_label.pack(pady=5)
+                self.hombres_entry = ttk.Entry(frame)
+                self.hombres_entry.insert(0, num_men)  # Llenar con el valor actual
+                self.hombres_entry.pack(pady=5, fill="x")
+    
+                # Etiqueta y entrada para la cantidad de mujeres
+                mujeres_label = ttk.Label(frame, text="Mujeres:")
+                mujeres_label.pack(pady=5)
+                self.mujeres_entry = ttk.Entry(frame)
+                self.mujeres_entry.insert(0, num_women)  # Llenar con el valor actual
+                self.mujeres_entry.pack(pady=5, fill="x")
 
-            hombres_label = ttk.Label(frame, text="Hombres:")
-            hombres_label.pack(pady=5)
-            self.hombres_entry = ttk.Entry(frame)
-            self.hombres_entry.insert(0, values[4])  # Llenar con el valor actual
-            self.hombres_entry.pack(pady=5, fill="x")
+        
+                # Agregar un botón para guardar los cambios
+                save_button = ttk.Button(frame, text="Guardar", command=self.save_changes(evento_id))
+                save_button.pack(pady=10)
+        
+            except sqlite3.Error as e:
+                # Si ocurre un error al conectar o insertar datos, se capturará aquí
+                print("Error al conectar a la base de datos o insertar datos:", e)
+  
     
-            mujeres_label = ttk.Label(frame, text="Mujeres:")
-            mujeres_label.pack(pady=5)
-            self.mujeres_entry = ttk.Entry(frame)
-            self.mujeres_entry.insert(0, values[5])  # Llenar con el valor actual
-            self.mujeres_entry.pack(pady=5, fill="x")
+  
     
-            # Agregar un botón para guardar los cambios
-            save_button = ttk.Button(frame, text="Guardar", command=self.save_changes)
-            save_button.pack(pady=10)
-    
-    def save_changes(self):
+  
+    def save_changes(self, evento_id):
         # Obtener los valores modificados
-        evento_id = self.evento_id
+        evento_id = evento_id
         evento = self.evento_entry.get()
+        exponentes = self.exponentes_entry.get()  
+        ubicacion = self.ubicacion_entry.get()  
         fecha = self.fecha_entry.get()
         hombres = self.hombres_entry.get()
         mujeres = self.mujeres_entry.get()
         
+
         # Realizar validaciones
-        if not evento or not fecha or not hombres or not mujeres:
+        if not evento or not exponentes or not ubicacion or not fecha or not hombres or not mujeres:
             # Mostrar un mensaje de error
             tk.messagebox.showerror("Error", "Ningún campo puede quedar vacío.")
-            
+    
             # Hacer que la ventana de edición parpadee
             self.flash_edit_window()
             return
-        
+    
         try:
             # Verificar que la fecha tenga un formato válido
             datetime.datetime.strptime(fecha, '%Y-%m-%d')
         except ValueError:
             # Mostrar un mensaje de error
             tk.messagebox.showerror("Error", "El formato de fecha debe ser YYYY-MM-DD.")
-            
+    
             # Restablecer el valor en el campo de fecha a "YYYY-MM-DD"
             self.fecha_entry.delete(0, tk.END)
             self.fecha_entry.insert(0, "YYYY-MM-DD")
-            
+    
             # Hacer que la ventana de edición parpadee
             self.flash_edit_window()
             return
-        
+    
         try:
             # Verificar que los campos "Hombres" y "Mujeres" contengan números enteros mayores o iguales a 0
             hombres = int(hombres)
@@ -306,14 +345,14 @@ class App:
             if hombres < 0 or mujeres < 0:
                 # Mostrar un mensaje de error
                 tk.messagebox.showerror("Error", "Los campos 'Hombres' y 'Mujeres' deben ser números enteros no negativos.")
-                
+    
                 # Hacer que la ventana de edición parpadee
                 self.flash_edit_window()
                 return
         except ValueError:
             # Mostrar un mensaje de error
             tk.messagebox.showerror("Error", "Los campos 'Hombres' y 'Mujeres' deben ser números enteros no negativos.")
-            
+    
             # Hacer que la ventana de edición parpadee
             self.flash_edit_window()
             return
@@ -325,8 +364,8 @@ class App:
             cursor = conn.cursor()
             
             # Construir y ejecutar la sentencia SQL UPDATE
-            update_query = "UPDATE eventos SET nombre_evento = ?, fecha_evento = ?, asistentes_hombres = ?, asistentes_mujeres = ? WHERE id = ?"
-            cursor.execute(update_query, (evento, fecha, hombres, mujeres, evento_id))
+            update_query = "UPDATE eventos SET nombre_evento = ?, nombres_exponentes = ?, lugar_evento = ?, fecha_evento = ?, asistentes_hombres = ?, asistentes_mujeres = ? WHERE id = ?"
+            cursor.execute(update_query, (evento, exponentes, ubicacion, fecha, hombres, mujeres, evento_id))
             
             # Confirmar los cambios en la base de datos
             conn.commit()
@@ -436,7 +475,7 @@ class App:
             cursor = conn.cursor()
 
             # Consulta SQL para obtener los registros entre las fechas dadas
-            query = "SELECT id, nombre_evento, fecha_evento, asistentes_hombres, asistentes_mujeres FROM eventos WHERE fecha_evento BETWEEN ? AND ? ORDER BY fecha_evento"
+            query = "SELECT id, nombre_evento,  nombres_exponentes, lugar_evento, fecha_evento, asistentes_hombres, asistentes_mujeres FROM eventos WHERE fecha_evento BETWEEN ? AND ? ORDER BY fecha_evento"
             cursor.execute(query, (start_date, end_date))
 
             # Obtener los registros resultantes
@@ -505,6 +544,18 @@ class App:
                 tk.messagebox.showerror("Error", f"Error al exportar a Excel: {str(e)}")
 
 
+
+    def pdf_button_clicked(self):
+        selected_item = self.table.selection()
+        if selected_item:
+            # Obtener los valores de la fila seleccionada
+            selected_row = self.table.item(selected_item)
+            values = selected_row['values']
+            id = values[0]
+            FileMaker.create_pdf_report(id)
+
+
+
     def open_photo_load_page(self):
         # Cuando se presione el botón "Agregar", crea una instancia de PhotoLoadPage
         self.root.iconify()
@@ -515,119 +566,6 @@ class App:
     def run(self):
         self.root.mainloop()
 
-"""
-
-    def generate_pdf(self, selected_row):
-        try:
-            # Crear un archivo PDF con ReportLab
-            pdf_file = "evento.pdf"
-            c = canvas.Canvas(pdf_file, pagesize=letter)
-    
-            # Extraer los valores de la fila seleccionada
-            id_evento, evento, fecha, asistentes, hombres, mujeres = selected_row
-    
-            # Escribir la información en el PDF
-            c.drawString(100, 750, "ID del Evento: " + str(id_evento))
-            c.drawString(100, 730, "Evento: " + evento)
-            c.drawString(100, 710, "Fecha: " + fecha)
-            c.drawString(100, 690, "Asistentes: " + str(asistentes))
-            c.drawString(100, 670, "Hombres: " + str(hombres))
-            c.drawString(100, 650, "Mujeres: " + str(mujeres))
-    
-            # Guardar y cerrar el archivo PDF
-            c.save()
-    
-            messagebox.showinfo("PDF Generado", f"El archivo PDF '{pdf_file}' se ha generado con éxito.")
-        except Exception as e:
-            messagebox.showerror("Error", f"No se pudo generar el PDF: {str(e)}")
-    
-    # Luego, en tu función de botón PDF, llama a esta función con la fila seleccionada:
-    def pdf_button_clicked(self):
-        selected_item = self.table.selection()
-        if selected_item:
-            selected_row = self.table.item(selected_item)['values']
-            self.generate_pdf(selected_row)
-        else:
-            messagebox.showwarning("Advertencia", "Selecciona una fila antes de generar el PDF.")
-
-
-    def generate_pdf_from_data(self, selected_row):
-        try:
-            
-            # Extraer los valores de la fila seleccionada
-            id_evento, evento, fecha, asistentes, hombres, mujeres = selected_row
-            
-            # Crear un archivo PDF con ReportLab
-            pdf_file =evento.replace(" ", "_").lower() + ".pdf"
-            doc = SimpleDocTemplate(pdf_file, pagesize=letter, leftMargin=36, rightMargin=36, topMargin=54, bottomMargin=54)
-    
-            # Crear un objeto Story para el contenido del PDF
-            story = []
-    
-            # Estilos de texto
-            styles = getSampleStyleSheet()
-            title_style = styles["Title"]
-            normal_style = styles["Normal"]
-    
-            # Agregar el título
-            title = "Informe de Evento"
-            story.append(Paragraph(title, title_style))
-    
-            # Agregar información del evento
-            event_info = [
-                ["Evento:", conference_name],
-                ["Exponente:", speakers_names],
-                ["Lugar del evento:", location],
-                ["Total de asistentes:", str(num_men + num_women)],
-                ["Fecha del evento:", date],
-                ["Hora de inicio:", time],
-            ]
-    
-            # Crear una tabla para mostrar la información del evento
-            event_table = Table(event_info, colWidths=[150, 200])
-            event_table.setStyle(TableStyle([
-                ('FONT', (0, 0), (-1, 0), 'Helvetica-Bold'),  # Fuente negrita para la primera fila
-                ('FONT', (0, 1), (-1, -1), 'Helvetica', 12),  # Fuente tamaño 12 para las otras celdas
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),  # Alineación a la izquierda
-                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),  # Alineación vertical al centro
-            ]))
-    
-            # Agregar la tabla al Story
-            story.append(event_table)
-    
-            # Crear una gráfica de pastel con Matplotlib
-            data = [num_men, num_women]
-            labels = ["Hombres", "Mujeres"]
-            colors = ['#4C8FD6', '#FF8EB0']
-    
-            plt.figure(figsize=(6, 6))  # Aumentar el tamaño de la gráfica
-            wedges, texts, autotexts = plt.pie(data, labels=labels, colors=colors, autopct=lambda p: '{:.0f} ({:.1f}%)'.format(p * sum(data) / 100, p))
-            plt.title('Distribución de Asistentes', fontsize=14, fontweight='bold')
-    
-            for autotext in autotexts:
-                autotext.set_fontsize(12)  # Tamaño de fuente para los porcentajes
-                autotext.set_color('white')  # Color de fuente en blanco
-    
-            # Guardar la gráfica en un objeto BytesIO
-            buffer = BytesIO()
-            plt.savefig(buffer, format='png')
-            plt.close()
-    
-            # Crear la imagen a partir del contenido del objeto BytesIO
-            pie_chart_image = Image(buffer, width=350, height=350)
-    
-            # Agregar la imagen al Story
-            story.append(pie_chart_image)
-    
-            # Construir el PDF
-            doc.build(story)
-    
-            messagebox.showinfo("PDF Generado", f"El archivo PDF '{pdf_file}' se ha generado con éxito.")
-        except Exception as e:
-            messagebox.showerror("Error", f"No se pudo generar el PDF: {str(e)}")
-
-    
-"""
 
 
 

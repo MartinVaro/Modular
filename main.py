@@ -6,23 +6,41 @@ Created on Thu Aug  3 15:39:22 2023
 """
 
 import tkinter as tk
-from interface.interface import App  # Importa tu clase de la interfaz desde el módulo
+from tkinter import messagebox
+from interface.interface import App 
+import sqlite3
 
-if __name__ == "__main__":
-    root = tk.Tk()  # Crea la ventana principal
-    app = App(root)  # Pasa la ventana principal como argumento
-    app.run()
+try:
+    # Conectar a la base de datos (o crearla si no existe)
+    conn = sqlite3.connect('database/eventos.db')
 
+    # Crear un cursor para ejecutar comandos SQL
+    cursor = conn.cursor()
 
+    # Crear la tabla "eventos"
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS eventos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre_evento TEXT NOT NULL,
+            nombres_exponentes TEXT,
+            lugar_evento TEXT,
+            fecha_evento DATE NOT NULL,
+            asistentes_hombres INTEGER NOT NULL,
+            asistentes_mujeres INTEGER NOT NULL
+        )
+    ''')
 
+    # Guardar los cambios en la base de datos
+    conn.commit()
 
+    # Cerrar la conexión
+    conn.close()
 
-"""
-import tkinter as tk
-from load.photo_load_page import PhotoLoadPage
+    if __name__ == "__main__":
+        root = tk.Tk() 
+        app = App(root)  
+        app.run()
 
-
-root = tk.Tk()
-app = PhotoLoadPage(root)
-root.mainloop()
-"""
+except sqlite3.Error as e:
+    # Muestra una alerta en caso de error
+    messagebox.showerror("Error", f"Error al conectar a la base de datos: {e}")

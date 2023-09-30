@@ -19,6 +19,9 @@ class PhotoLoadPage:
         self.root.title("Pagina de Carga de Fotos")
         self.root.resizable(False, False)
         #self.root.geometry("800x600")  # Tamaño de la ventana
+        
+        # Configurar el evento de cierre de la ventana secundaria
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
         # Variables para las imágenes
         self.image1_path = tk.StringVar()
@@ -86,7 +89,7 @@ class PhotoLoadPage:
             if self.image1_path.get() and self.image2_path.get():
                 
                 options = self.selected_option.get()
-                app = TwoPhotosDetectionPage(self.root, self.image1_path.get(), self.image2_path.get(), options)
+                app = TwoPhotosDetectionPage(self.root, self.App, self.image1_path.get(), self.image2_path.get(), options)
                 #self.root.withdraw()
             else:
                 messagebox.showerror("Error", "Por favor, carga ambas imágenes antes de continuar.")
@@ -95,7 +98,7 @@ class PhotoLoadPage:
                 #self.root.withdraw()
                 options = self.selected_option.get()
                 #second_window = tk.Toplevel(self.root)
-                app = SinglePhotoDetectionPage(self.root, self.image1_path.get(), options)
+                app = SinglePhotoDetectionPage(self.root, self.App, self.image1_path.get(), options)
             else:
                 messagebox.showerror("Error", "Por favor, carga al menos una imagen antes de continuar.")
                 
@@ -103,6 +106,13 @@ class PhotoLoadPage:
     def close_window(self):
         # Cierra la ventana de PhotoLoadPage
         self.root.destroy()
-
         # Restaura la ventana principal
         self.App.deiconify()
+        
+    def on_closing(self):
+        # Restaura la ventana principal
+        self.App.deiconify()
+        
+        # Cierra la ventana de PhotoLoadPage
+        self.root.destroy()
+        

@@ -10,11 +10,12 @@ from tkinter import ttk
 from tkinter import messagebox
 from PIL import Image, ImageTk
 import cv2
-import detectionComparador as detect
+import models.detectionComparador as detect
 from gender_classification.gender_classifier_window import GenderClassifierWindow
 
 class FaceComparison:
-    def __init__(self, Detection, scaled_image1, detected_faces_image1, scaled_image2, detected_faces_image2, selected_option):
+    def __init__(self, Detection, App, scaled_image1, detected_faces_image1, scaled_image2, detected_faces_image2, selected_option):
+        self.App = App
         self.Detection = Detection
         self.root = tk.Toplevel()
         self.root.title("Pagina de Comparación de Rostros")
@@ -33,6 +34,8 @@ class FaceComparison:
         self.at_least_one_selected = False  # Variable de control
         self.reclassify_count = 0  # Variable para llevar un registro de las veces que se ha presionado el botón
         
+        # Configurar el evento de cierre de la ventana secundaria
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)  
 
         label_style = ttk.Style()
         label_style.configure("Custom.TLabel", foreground="white", background="#007ACC", font=("Helvetica", 8), padding=5, borderwidth=2, relief="solid")
@@ -156,7 +159,7 @@ class FaceComparison:
     def continue_pressed(self):
         self.root.withdraw()
         faces=self.merge_faces_to_unique()
-        app = GenderClassifierWindow(self.root, faces)
+        app = GenderClassifierWindow(self.root, self.App, faces)
         
         
     def reclassify_pressed(self):
@@ -208,7 +211,13 @@ class FaceComparison:
         # Cerrar la ventana actual
         self.root.destroy()
 
-
+    def on_closing(self):
+        # Restaura la ventana principal
+        self.App.deiconify()
+        
+        # Cierra la ventana de PhotoLoadPage
+        self.root.destroy()
+        self.Detection.destroy()
 
 
 

@@ -21,7 +21,6 @@ cursor.execute('''
         nombres_exponentes TEXT,
         lugar_evento TEXT,
         fecha_evento DATE NOT NULL,
-        hora_evento TIME,
         asistentes_hombres INTEGER NOT NULL,
         asistentes_mujeres INTEGER NOT NULL
     )

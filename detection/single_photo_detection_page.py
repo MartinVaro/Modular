@@ -8,18 +8,23 @@ Created on Wed Aug  9 11:35:21 2023
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
-import MTCNN as mtcnn
+import models.MTCNN as mtcnn
 import cv2
 from gender_classification.gender_classifier_window import GenderClassifierWindow
 
 class SinglePhotoDetectionPage:
-    def __init__(self, Load, image1, options):
+    def __init__(self, Load, App, image1, options):
+        self.App = App
         self.Load = Load
         self.root = tk.Toplevel()
         self.root.title("Pagina de Deteccion de Rostros de una Sola Foto")
         self.root.geometry("800x600")  # Tamaño de la ventana
         self.root.resizable(False, False)
         self.checkbox_vars = []
+        
+        
+        # Configurar el evento de cierre de la ventana secundaria
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         
         # Variable de control para rastrear si se ha borrado alguna imagen
         self.images_deleted = False
@@ -167,19 +172,17 @@ class SinglePhotoDetectionPage:
     def continue_pressed(self):
 
         # Crear una nueva instancia de la ventana del Clasificador de género
-        
         if self.images_deleted:
             self.root.withdraw()
             faces=self.extract_faces(self.scaled_image, self.updated_detected_faces)
-            app = GenderClassifierWindow(self.root, faces)
+            app = GenderClassifierWindow(self.root, self.App, faces)
             
         else:
             self.root.withdraw()
             faces=self.extract_faces(self.scaled_image, self.detected_faces)
-            app = GenderClassifierWindow(self.root, faces)
+            app = GenderClassifierWindow(self.root, self.App, faces)
            
-
-        
+   
     def count_faces(self, detected_faces):
         return len(detected_faces)     
         
@@ -210,3 +213,10 @@ class SinglePhotoDetectionPage:
         return updated_detected_faces
 
 
+    def on_closing(self):
+        # Restaura la ventana principal
+        self.App.deiconify()
+        
+        # Cierra la ventana de PhotoLoadPage
+        self.root.destroy()
+        self.Load.destroy()

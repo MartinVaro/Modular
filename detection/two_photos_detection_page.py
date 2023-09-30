@@ -10,13 +10,14 @@ Created on Wed Aug  9 11:29:22 2023
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
-import MTCNN as mtcnn
+import models.MTCNN as mtcnn
 import cv2
 from comparison.face_comparison_page import FaceComparison
 
 class TwoPhotosDetectionPage:
        
-    def __init__(self, Load, image1, image2, options):
+    def __init__(self, Load, App, image1, image2, options):
+        self.App = App
         self.Load = Load
         self.root = tk.Toplevel()
         self.root.title("Pagina de Deteccion de Rostros de Dos Fotos")
@@ -26,6 +27,9 @@ class TwoPhotosDetectionPage:
         self.checkbox_vars_image1 = [] 
         self.checkbox_vars_image2 = []  
         self.selected_option = options
+
+        # Configurar el evento de cierre de la ventana secundaria
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
         label_style = ttk.Style()
         label_style.configure("Custom.TLabel", foreground="white", background="#007ACC", font=("Helvetica", 8), padding=5, borderwidth=2, relief="solid")
@@ -182,7 +186,7 @@ class TwoPhotosDetectionPage:
 
     def continue_pressed(self):
         # Crear una nueva instancia de la ventana FaceComparison
-        app = FaceComparison(self.root, self.scaled_image1, self.detected_faces_image1, self.scaled_image2, self.detected_faces_image2, self.selected_option)
+        app = FaceComparison(self.root, self.App, self.scaled_image1, self.detected_faces_image1, self.scaled_image2, self.detected_faces_image2, self.selected_option)
         #self.root.withdraw()
 
     def delete_selected(self):
@@ -206,3 +210,10 @@ class TwoPhotosDetectionPage:
         updated_detected_faces = [detection for detection, checkbox_var in zip(detected_faces, checkbox_vars) if not checkbox_var.get()]
         return updated_detected_faces
 
+    def on_closing(self):
+        # Restaura la ventana principal
+        self.App.deiconify()
+        
+        # Cierra la ventana de PhotoLoadPage
+        self.root.destroy()
+        self.Load.destroy()

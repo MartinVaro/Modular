@@ -9,13 +9,14 @@ import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
 import cv2
-import modelGenderDetection as mu
+import models.modelGenderDetection as mu
 import numpy as np
-from pdfgenerator.conference_page import ConferenceWindow
+from conference_window.conference_page import ConferenceWindow
 
 
 class GenderClassifierWindow:
-    def __init__(self, Detection, detected_faces):
+    def __init__(self, Detection, App, detected_faces):
+        self.App = App
         self.Detection = Detection
         self.root = tk.Toplevel()
         self.root.title("Clasificador de Género")    
@@ -23,11 +24,14 @@ class GenderClassifierWindow:
         self.root.resizable(False, False)
         self.detected_faces = detected_faces
         self.gender_model = mu.create_gender_model()
-        self.gender_model.load_weights("gender_model_weights.h5")
+        self.gender_model.load_weights("models/gender_model_weights.h5")
         self.face_data = []  # Almacenar información de las caras (imagen, género, selección)
         self.face_info_images = []  # Lista para almacenar las referencias a las imágenes de Tkinter
         self.checkbox_vars = []
         self.face_train = []
+
+        # Configurar el evento de cierre de la ventana secundaria
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         
         label_style = ttk.Style()
         label_style.configure("Custom.TLabel", foreground="white", background="#007ACC", font=("Helvetica", 8), padding=5, borderwidth=2, relief="solid")
@@ -197,7 +201,7 @@ class GenderClassifierWindow:
     def continue_pressed(self):
         num_men, num_women, total_people = self.count_genders()
         self.root.withdraw()
-        app = ConferenceWindow(self.root, num_men, num_women)
+        app = ConferenceWindow(self.root, self.App, num_men, num_women)
         
         
         """
@@ -225,7 +229,13 @@ class GenderClassifierWindow:
             
 
 
-
+    def on_closing(self):
+        # Restaura la ventana principal
+        self.App.deiconify()
+        
+        # Cierra la ventana de PhotoLoadPage
+        self.root.destroy()
+        self.Detection.destroy()
 
 
 
