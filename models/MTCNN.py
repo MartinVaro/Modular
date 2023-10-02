@@ -39,7 +39,17 @@ def detect_faces_and_display(image_path):
 
 
 
+def detect(image_path):
 
+
+    # Crear una instancia del detector MTCNN
+    detector = MTCNN()
+
+    # Detectar rostros en la imagen
+    detection = detector.detect_faces(image_path)
+
+
+    return detection
 
 
 
