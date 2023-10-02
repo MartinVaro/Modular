@@ -7,9 +7,7 @@ Created on Sun Jul 30 17:13:18 2023
 
 
 import cv2
-import numpy as np
 from deepface import DeepFace
-import matplotlib.pyplot as plt
 
 
 
@@ -35,7 +33,9 @@ def CompareFaces(scaled_image1, detected_faces_image1, scaled_image2, detected_f
         thresholds = [0.1, 0.2, 0.3]
     elif selected_option == "bajo":
         thresholds = [0.3]
-
+        
+        
+    compared_indices_distances = set()
     # Calcular todas las distancias de antemano
     distances = []
     for i, face1_coords in enumerate(faces1):
@@ -47,23 +47,32 @@ def CompareFaces(scaled_image1, detected_faces_image1, scaled_image2, detected_f
         print("Rostro:", i+1)
         for j, face2_coords in enumerate(faces2):
            
+            if j in compared_indices_distances:
+                continue
+           
             x2, y2, width2, height2 = face2_coords
             face_roi2 = image2[y2:y2 + height2, x2:x2 + width2]
             # Realizar la comparación de rostros con enforce_detection=False
             distance = DeepFace.verify(img1_path=face_roi1, img2_path=face_roi2, enforce_detection=False)
+            distances_row.append(distance)
+
             
             # Si la distancia es menor a 0.3, aumentar el contador de coincidencias
-            if distance < 0.3:
-                distances_row.append(distance)
+            if distance < 0.25:
+                if distance < 0.15:
+                    compared_indices_distances.add(j)
+                    #print("SUPER BREAAAAAAAAAAAK :", j)
+                    break
                 matches += 1
             
             # Si el contador de coincidencias es mayor o igual a 3, detener la iteración
             if matches >= 3:
-                print("aqui hubo break :", j)
+                #print("aqui hubo break :", j)
                 break
             
-            distances_row.append(None)
+            
         distances.append(distances_row)
+        del distances_row
 
 
 
@@ -77,30 +86,35 @@ def CompareFaces(scaled_image1, detected_faces_image1, scaled_image2, detected_f
         for i, face1_coords in enumerate(faces1):
            
             print("Cara numero:", i + 1)
+            
             if i in compared_indices_faces1:
                 continue
+            x1, y1, width1, height1 = face1_coords
+            face_roi1 = image1[y1:y1+height1, x1:x1+width1]
             for j, face2_coords in enumerate(faces2):
                 if j in compared_indices_faces2:
                     continue
 
                 # Recortar el rostro de cada imagen
-                x1, y1, width1, height1 = face1_coords
+               
                 x2, y2, width2, height2 = face2_coords
-                face_roi1 = image1[y1:y1+height1, x1:x1+width1]
                 face_roi2 = image2[y2:y2+height2, x2:x2+width2]
 
-                distance = distances[i][j]
-                if distance < threshold:
-                   
-                    print(f"El rostro {i+1} en la imagen 1 y el rostro {j+1} en la imagen 2 pertenecen a la misma persona.")
-                    # Agregar el índice de rostro en faces2 como comparado
-                    compared_indices_faces1.add(i)
-                    compared_indices_faces2.add(j)
-                    # Redimensionar el segundo rostro para que tenga la misma altura que el primero
-                    face_roi2_resized = cv2.resize(face_roi2, (face_roi1.shape[1], face_roi1.shape[0]))      
-                    # Agregar el rostro emparejado aprobado a la lista
-                    approved_faces.append([face_roi1, face_roi2_resized])      
-                    break     # No es necesario comparar con otros rostros en faces2 para este rostro en faces1
+                if i < len(distances) and j < len(distances[i]):
+
+                    # Obtener la distancia desde el diccionario
+                    distance = distances[i][j]
+    
+                    if distance < threshold:
+                        print(f"El rostro {i+1} en la imagen 1 y el rostro {j+1} en la imagen 2 pertenecen a la misma persona.", distance)
+                        # Agregar el índice de rostro en faces2 como comparado
+                        compared_indices_faces1.add(i)
+                        compared_indices_faces2.add(j)
+                        # Redimensionar el segundo rostro para que tenga la misma altura que el primero
+                        face_roi2_resized = cv2.resize(face_roi2, (face_roi1.shape[1], face_roi1.shape[0]))      
+                        # Agregar el rostro emparejado aprobado a la lista
+                        approved_faces.append([face_roi1, face_roi2_resized])      
+                        break     # No es necesario comparar con otros rostros en faces2 para este rostro en faces1
     
  
     # Ahora agregar los rostros restantes de faces1 que no tuvieron semejanza con ningún rostro en faces2
@@ -697,6 +711,157 @@ cv2.imwrite("rostros_unicos.jpg", destination_image)
 plt.imshow(cv2.cvtColor(destination_image, cv2.COLOR_BGR2RGB))
 plt.axis('off')
 plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def CompareFaces(scaled_image1, detected_faces_image1, scaled_image2, detected_faces_image2, selected_option):
+    
+    detections1 = detected_faces_image1
+    detections2 = detected_faces_image2
+    image1 = scaled_image1
+    image2 = scaled_image2
+
+    # Obtener las coordenadas de los rostros en cada imagen
+    faces1 = [detection['box'] for detection in detections1]
+    faces2 = [detection['box'] for detection in detections2]
+
+    # Lista para almacenar los rostros emparejados aprobados
+    approved_faces = []
+    unique_faces = []
+
+    # Definir los umbrales a utilizar
+    if selected_option == "alto":
+        thresholds = [0.15, 0.2, 0.25, 0.3]
+    elif selected_option == "medio":
+        thresholds = [0.1, 0.2, 0.3]
+    elif selected_option == "bajo":
+        thresholds = [0.3]
+
+    # Calcular todas las distancias de antemano
+    distances = {}
+    for i, face1_coords in enumerate(faces1):
+        distances_row = {}
+        matches = 0
+        x1, y1, width1, height1 = face1_coords
+        face_roi1 = image1[y1:y1 + height1, x1:x1 + width1]
+        
+        print("Rostro:", i+1)
+        for j, face2_coords in enumerate(faces2):
+           
+            x2, y2, width2, height2 = face2_coords
+            face_roi2 = image2[y2:y2 + height2, x2:x2 + width2]
+            # Realizar la comparación de rostros con enforce_detection=False
+            distance = DeepFace.verify(img1_path=face_roi1, img2_path=face_roi2, enforce_detection=False)
+            
+            # Si la distancia es menor a 0.3, aumentar el contador de coincidencias
+            if distance < 0.3:
+                distances_row[j] = distance
+                if distance < 0.15:
+                    print("SUPER BREAAAAAAAAAAAK :", j)
+                    break
+                matches += 1
+            
+            # Si el contador de coincidencias es mayor o igual a 3, detener la iteración
+            if matches >= 3:
+                print("aqui hubo break :", j)
+                break
+            
+            distances_row[j] = None
+        distances[i] = distances_row
+
+
+
+    compared_indices_faces1 = set()
+    compared_indices_faces2 = set()  # Conjunto para almacenar los índices de rostros comparados
+    # Realizar la comparación de rostros utilizando DeepFace
+    for threshold in thresholds:
+               
+       # compared_indices = set()  # Conjunto para almacenar los índices de rostros comparados
+
+        for i, face1_coords in enumerate(faces1):
+           
+            print("Cara numero:", i + 1)
+            if i in compared_indices_faces1:
+                continue
+            for j, face2_coords in enumerate(faces2):
+                if j in compared_indices_faces2:
+                    continue
+
+                # Recortar el rostro de cada imagen
+                x1, y1, width1, height1 = face1_coords
+                x2, y2, width2, height2 = face2_coords
+                face_roi1 = image1[y1:y1+height1, x1:x1+width1]
+                face_roi2 = image2[y2:y2+height2, x2:x2+width2]
+
+                distance = distances[i][j]
+                if distance < threshold:
+                   
+                    print(f"El rostro {i+1} en la imagen 1 y el rostro {j+1} en la imagen 2 pertenecen a la misma persona.")
+                    # Agregar el índice de rostro en faces2 como comparado
+                    compared_indices_faces1.add(i)
+                    compared_indices_faces2.add(j)
+                    # Redimensionar el segundo rostro para que tenga la misma altura que el primero
+                    face_roi2_resized = cv2.resize(face_roi2, (face_roi1.shape[1], face_roi1.shape[0]))      
+                    # Agregar el rostro emparejado aprobado a la lista
+                    approved_faces.append([face_roi1, face_roi2_resized])      
+                    break     # No es necesario comparar con otros rostros en faces2 para este rostro en faces1
+    
+ 
+    # Ahora agregar los rostros restantes de faces1 que no tuvieron semejanza con ningún rostro en faces2
+    for i, face1_coords in enumerate(faces1):
+        if i not in compared_indices_faces1:
+            x, y, w, h = face1_coords
+            unique_faces.append(image1[y:y+h, x:x+w])
+    
+    # Ahora agregar los rostros restantes de faces2 que no tuvieron semejanza con ningún rostro en faces1
+    for j, face2_coords in enumerate(faces2):
+        if j not in compared_indices_faces2:
+            x, y, w, h = face2_coords
+            unique_faces.append(image2[y:y+h, x:x+w])
+    
+    return approved_faces, unique_faces   
+
+
+
+
+
+
+
 
 
 
