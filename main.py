@@ -7,6 +7,7 @@ Created on Thu Aug  3 15:39:22 2023
 
 import tkinter as tk
 from tkinter import messagebox
+import customtkinter
 from interface.interface import App 
 import sqlite3
 
@@ -37,10 +38,12 @@ try:
     conn.close()
 
     if __name__ == "__main__":
-        root = tk.Tk() 
+        root = customtkinter.CTk()
+        root.resizable(False, False)
         app = App(root)  
         app.run()
 
 except sqlite3.Error as e:
     # Muestra una alerta en caso de error
     messagebox.showerror("Error", f"Error al conectar a la base de datos: {e}")
+

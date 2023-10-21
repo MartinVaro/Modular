@@ -7,22 +7,24 @@ Created on Thu Aug 10 11:37:27 2023
 
 import tkinter as tk
 from tkinter import ttk
+import customtkinter
 from tkinter import filedialog
 from tkinter import messagebox
 from detection.two_photos_detection_page import TwoPhotosDetectionPage
 from detection.single_photo_detection_page import SinglePhotoDetectionPage
+from PIL import Image
 
 class PhotoLoadPage:
-    def __init__(self, App):
+    def __init__(self, App, root):
         self.App = App
-        self.root = tk.Toplevel()
+        self.App_window = root
+        self.root = customtkinter.CTkToplevel()
         self.root.title("Pagina de Carga de Fotos")
         self.root.resizable(False, False)
         #self.root.geometry("800x600")  # Tamaño de la ventana
         
         # Configurar el evento de cierre de la ventana secundaria
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
-
         # Variables para las imágenes
         self.image1_path = tk.StringVar()
         self.image2_path = tk.StringVar()
@@ -33,40 +35,45 @@ class PhotoLoadPage:
         self.selected_option.set("alto")  # Valor predeterminado
 
         # Etiqueta y botón para cargar la imagen
-        load_label = tk.Label(self.root, text="Cargar imagen 1:")
-        load_label.grid(row=0, column=0, padx=20, pady=20, sticky="w")
+        load_image = customtkinter.CTkImage(Image.open("images/imagen.png"), size=(26, 26))
+        load_label = customtkinter.CTkLabel(self.root, text="  Imagen 1:", font=('Calibri', 15), image=load_image, compound=tk.LEFT)
+        load_label.grid(row=0, column=0, padx=10, pady=10, sticky=tk.W)
 
-        self.image_label = tk.Label(self.root, textvariable=self.image1_path, relief="groove", width=50)
-        self.image_label.grid(row=0, column=1, padx=10, pady=20, sticky="w")
+        self.image_label = customtkinter.CTkLabel(self.root, textvariable=self.image1_path, width=450, font=('Calibri', 15),  fg_color="white", corner_radius= 8)
+        self.image_label.grid(row=0, column=1, padx=10, pady=10,)
 
         # Elemento para cargar una imagen
-        self.load_image_button = ttk.Button(self.root, text="Cargar", command=self.load_image)
-        self.load_image_button.grid(row=0, column=2, padx=10, pady=20)
+        cargar_image = customtkinter.CTkImage(Image.open("images/imagen.png"), size=(26, 26))
+        self.load_image_button = customtkinter.CTkButton(self.root, text="Cargar", command=self.load_image, image= cargar_image, text_color= "black", fg_color="transparent")
+        self.load_image_button.grid(row=0, column=2, padx=10, pady=10)
+
 
         # Checkbox para mostrar opciones adicionales
-        self.show_options_checkbox = ttk.Checkbutton(self.root, text="Mostrar opciones adicionales", variable=self.show_additional_elements, command=self.toggle_options)
-        self.show_options_checkbox.grid(row=1, columnspan=3, padx=20, pady=10, sticky="w")
+        self.show_options_checkbox = customtkinter.CTkCheckBox(self.root, text="Opciones adicionales", font=('Calibri', 15), variable=self.show_additional_elements, command=self.toggle_options)
+        self.show_options_checkbox.grid(row=1, column=0, padx=10, pady=10, sticky=tk.W)
 
         # Etiqueta y botón para cargar la segunda imagen (ocultos inicialmente)
-        self.load_label2 = tk.Label(self.root, text="Cargar imagen 2:")
-        self.image2_label = tk.Label(self.root, textvariable=self.image2_path, relief="groove", width=50)
-        self.load_image2_button = ttk.Button(self.root, text="Cargar", command=self.load_image2)
+        self.load_label2 = customtkinter.CTkLabel(self.root, text="  Imagen 2:", font=('Calibri', 15), image=load_image, compound=tk.LEFT)
+        self.image2_label = customtkinter.CTkLabel(self.root, textvariable=self.image2_path, width=450, font=('Calibri', 15),  fg_color="white", corner_radius= 8)
+        self.load_image2_button = customtkinter.CTkButton(self.root, text="Cargar", command=self.load_image2, image= cargar_image, text_color= "black", fg_color="transparent")
 
         # Botones Cerrar y Continuar
-        self.button_frame = tk.Frame(self.root)
+        self.button_frame = customtkinter.CTkFrame(self.root, fg_color="transparent")
         self.button_frame.grid(row=3, column=1, columnspan=3, padx=0, pady=20, sticky="e")
 
-        self.continue_button = ttk.Button(self.button_frame, text="Continuar", command=self.continue_pressed)
-        self.continue_button.pack(side="right", padx=10)
-
-        self.close_button = ttk.Button(self.button_frame, text="Cerrar", command=self.close_window)
+        close_image = customtkinter.CTkImage(Image.open("images/volver.png"), size=(26, 26))
+        self.close_button = customtkinter.CTkButton(self.button_frame, text="Regresar", command=self.close_window, image= close_image, text_color= "black", fg_color="transparent")
         self.close_button.pack(side="right")
+        
+        continue_image = customtkinter.CTkImage(Image.open("images/aceptar.png"), size=(26, 26))
+        self.continue_button = customtkinter.CTkButton(self.button_frame, text="Aceptar", command=self.continue_pressed, image= continue_image, text_color= "black", fg_color="transparent")
+        self.continue_button.pack(side="right")
 
     def toggle_options(self):
         if self.show_additional_elements.get():
-            self.load_label2.grid(row=2, column=0, padx=20, pady=10, sticky="w")
-            self.image2_label.grid(row=2, column=1, padx=10, pady=10, sticky="w", columnspan=2)
-            self.load_image2_button.grid(row=2, column=2, padx=10, pady=10, sticky="w")
+            self.load_label2.grid(row=2, column=0, padx=10, pady=10, sticky=tk.W)
+            self.image2_label.grid(row=2, column=1, padx=10, pady=10)
+            self.load_image2_button.grid(row=2, column=2, padx=10, pady=10)
         else:
             self.load_label2.grid_forget()
             self.image2_label.grid_forget()
@@ -89,7 +96,7 @@ class PhotoLoadPage:
             if self.image1_path.get() and self.image2_path.get():
                 
                 options = self.selected_option.get()
-                app = TwoPhotosDetectionPage(self.root, self.App, self.image1_path.get(), self.image2_path.get(), options)
+                app = TwoPhotosDetectionPage(self.root, self.App, self.App_window, self.image1_path.get(), self.image2_path.get(), options)
                 #self.root.withdraw()
             else:
                 messagebox.showerror("Error", "Por favor, carga ambas imágenes antes de continuar.")
@@ -98,7 +105,7 @@ class PhotoLoadPage:
                 #self.root.withdraw()
                 options = self.selected_option.get()
                 #second_window = tk.Toplevel(self.root)
-                app = SinglePhotoDetectionPage(self.root, self.App, self.image1_path.get(), options)
+                app = SinglePhotoDetectionPage(self.root, self.App, self.App_window, self.image1_path.get(), options)
             else:
                 messagebox.showerror("Error", "Por favor, carga al menos una imagen antes de continuar.")
                 
@@ -107,11 +114,11 @@ class PhotoLoadPage:
         # Cierra la ventana de PhotoLoadPage
         self.root.destroy()
         # Restaura la ventana principal
-        self.App.deiconify()
+        self.App_window.deiconify()
         
     def on_closing(self):
         # Restaura la ventana principal
-        self.App.deiconify()
+        self.App_window.deiconify()
         
         # Cierra la ventana de PhotoLoadPage
         self.root.destroy()

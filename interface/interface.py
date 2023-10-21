@@ -5,6 +5,7 @@ Created on Fri Aug 18 16:46:25 2023
 @author: akava
 """
 
+import customtkinter
 import tkinter as tk
 from tkinter import ttk
 import sqlite3
@@ -14,10 +15,14 @@ from tkcalendar import DateEntry
 import openpyxl
 from tkinter import filedialog
 from load.photo_load_page import PhotoLoadPage
-
+from PIL import Image
+import re
 
 class App:
     def __init__(self, root):
+        
+        customtkinter.set_default_color_theme("dark-blue")
+        
         self.root = root
         self.root.title("Event AI")
         self.data = []  # Almacenar los datos de la tabla
@@ -33,7 +38,7 @@ class App:
         
 
     def create_main_section(self):
-        main_frame = ttk.Frame(self.root)
+        main_frame = customtkinter.CTkFrame(self.root, fg_color=("transparent"))
         main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
 
         self.create_buttons_section(main_frame)
@@ -41,10 +46,16 @@ class App:
         self.create_navigation_section(main_frame)
 
     def create_table_section(self, main_frame):
-        table_frame = ttk.Frame(main_frame)
+        table_frame = customtkinter.CTkFrame(main_frame, fg_color=("transparent"))
         table_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-    
-        self.table = ttk.Treeview(table_frame, columns=("ID", "Evento", "Fecha", "Asistentes", "Hombres", "Mujeres"), show="headings")
+                
+        style = ttk.Style()
+        style.configure("mystyle.Treeview", highlightthickness=0, bd=0, font=('Calibri', 11)) # Modify the font of the body
+        style.configure("mystyle.Treeview.Heading", font=('Calibri', 12,'bold')) # Modify the font of the headings
+        style.layout("mystyle.Treeview", [('mystyle.Treeview.treearea', {'sticky': 'nswe'})]) # Remove the borders
+        
+            
+        self.table = ttk.Treeview(table_frame, style="mystyle.Treeview", columns=("ID",  "Evento", "Fecha", "Asistentes", "Hombres", "Mujeres"), show="headings")
         self.table.heading("ID", text="ID", anchor="center")
         self.table.heading("Evento", text="Evento", anchor="center")
         self.table.heading("Fecha", text="Fecha", anchor="center")
@@ -62,82 +73,97 @@ class App:
     
         self.table.pack()
         self.fill_data_from_database()
- 
 
+ 
     def create_navigation_section(self, main_frame):
-        navigation_frame = ttk.Frame(main_frame)
+        navigation_frame = customtkinter.CTkFrame(main_frame, fg_color="transparent")
         navigation_frame.pack(side=tk.TOP, fill=tk.X, padx=50, pady=10)
     
-        first_page_button = ttk.Button(navigation_frame, text="<<", command=self.first_page)
-        first_page_button.pack(side=tk.LEFT, padx=10)
+        first_image = customtkinter.CTkImage(Image.open("images/primera.png"), size=(26, 26))
+        first_page_button = customtkinter.CTkButton(navigation_frame, command=self.first_page, image=first_image, text="", fg_color="transparent",width=80)
+        first_page_button.pack(side=tk.LEFT, padx=5)
     
-        prev_page_button = ttk.Button(navigation_frame, text="<", command=self.prev_page)
-        prev_page_button.pack(side=tk.LEFT, padx=10)
+        prev_image = customtkinter.CTkImage(Image.open("images/atras.png"), size=(26, 26))
+        prev_page_button = customtkinter.CTkButton(navigation_frame, command=self.prev_page, image=prev_image, text="", fg_color="transparent",width=80)
+        prev_page_button.pack(side=tk.LEFT, padx=5)
     
-        self.page_label = ttk.Label(navigation_frame, text="Página:")
-        self.page_label.pack(side=tk.LEFT, padx=10)
+        self.page_label = customtkinter.CTkLabel(navigation_frame, text="Página:")
+        self.page_label.pack(side=tk.LEFT, padx=5)
     
-        self.page_entry = ttk.Entry(navigation_frame, width=5)
-        self.page_entry.pack(side=tk.LEFT, padx=10)
+        self.page_entry = customtkinter.CTkEntry(navigation_frame, font=('Calibri', 15,'bold'), width=40)
+        self.page_entry.configure(justify="center")
+        self.page_entry.pack(side=tk.LEFT, padx=5)
     
-        next_page_button = ttk.Button(navigation_frame, text=">", command=self.next_page)
-        next_page_button.pack(side=tk.LEFT, padx=10)
+        next_image = customtkinter.CTkImage(Image.open("images/siguiente.png"), size=(26, 26))
+        next_page_button = customtkinter.CTkButton(navigation_frame, command=self.next_page, image=next_image, text="", fg_color="transparent", width=80)
+        next_page_button.pack(side=tk.LEFT, padx=5)
     
-        last_page_button = ttk.Button(navigation_frame, text=">>", command=self.last_page)
-        last_page_button.pack(side=tk.LEFT, padx=10)
+        last_image = customtkinter.CTkImage(Image.open("images/ultima.png"), size=(26, 26))
+        last_page_button = customtkinter.CTkButton(navigation_frame, command=self.last_page, image=last_image, text="", fg_color="transparent", width=80)
+        last_page_button.pack(side=tk.LEFT, padx=5)
 
-        go_to_button = ttk.Button(navigation_frame, text="Ir a Página", command=self.go_to_page)
-        go_to_button.pack(side=tk.LEFT, padx=10)
+        go_to_image = customtkinter.CTkImage(Image.open("images/seleccionar.png"), size=(26, 26))
+        go_to_button = customtkinter.CTkButton(navigation_frame, command=self.go_to_page, image=go_to_image, text="", fg_color="transparent", width=80)
+        go_to_button.pack(side=tk.LEFT, padx=5)
 
 
     def create_buttons_section(self, main_frame):
        
-        buttons_section_frame = ttk.Frame(main_frame)
+        buttons_section_frame = customtkinter.CTkFrame(main_frame, fg_color="transparent")
         buttons_section_frame.pack(side=tk.RIGHT)
-
         # Crear y colocar los botones en la cuadrícula
-        add_button = ttk.Button(buttons_section_frame, text="Agregar")
-        add_button.grid(row=0, column=0, padx=10, pady=10)
-        add_button.grid_configure(columnspan=2)
-        add_button.grid_configure(sticky="ew")
-        add_button.config(command=self.open_photo_load_page)
-
-        edit_button = ttk.Button(buttons_section_frame, text="Editar")
-        edit_button.grid(row=2, column=0, padx=10, pady=10)
-        edit_button.config(command=self.edit_button_clicked)
-
-        pdf_button = ttk.Button(buttons_section_frame, text="PDF")
-        pdf_button.grid(row=1, column=0, padx=10, pady=10)
-        pdf_button.config(command=self.pdf_button_clicked)
         
+        add_image = customtkinter.CTkImage(Image.open("images/nuevo.png"), size=(26, 26))
+        add_button = customtkinter.CTkButton(buttons_section_frame, image=add_image,  text_color= "black", text="Añadir ", fg_color="transparent", width=150)
+        add_button.grid(row=0, column=0, padx=10, pady=10)
+        add_button.configure(command=self.open_photo_load_page)
 
-        excel_button = ttk.Button(buttons_section_frame, text="Excel")
-        excel_button.grid(row=1, column=1, padx=5, pady=10)
-        excel_button.config(command=self.excel_button_clicked)
+        recharge_image = customtkinter.CTkImage(Image.open("images/recargar.png"), size=(26, 26))
+        recharge_button = customtkinter.CTkButton(buttons_section_frame, image= recharge_image,  text_color= "black", text="Recargar", fg_color="transparent", width=150)
+        recharge_button.grid(row=0, column=1, padx=10, pady=10)
+        recharge_button.configure(command=self.recharge_button_clicked)
 
-        delete_button = ttk.Button(buttons_section_frame, text="Eliminar")
-        delete_button.grid(row=2, column=1, padx=5, pady=10)
-        delete_button.config(command=self.delete_button_clicked)
+        edit_image = customtkinter.CTkImage(Image.open("images/editar.png"), size=(26, 26))
+        edit_button = customtkinter.CTkButton(buttons_section_frame, image=edit_image,  text_color= "black", text="Editar ", fg_color="transparent", width=150)
+        edit_button.grid(row=2, column=0, padx=10, pady=10)
+        edit_button.configure(command=self.edit_button_clicked)
 
-        filter_button = ttk.Button(buttons_section_frame, text="Filtrar")
+        pdf_image = customtkinter.CTkImage(Image.open("images/pdf.png"), size=(26, 26))
+        pdf_button = customtkinter.CTkButton(buttons_section_frame, image= pdf_image, text_color= "black", text="PDF   ", fg_color="transparent", width=150)
+        pdf_button.grid(row=1, column=0, padx=10, pady=10)
+        pdf_button.configure(command=self.pdf_button_clicked)
+        
+        excel_image = customtkinter.CTkImage(Image.open("images/excel.png"), size=(26, 26))
+        excel_button = customtkinter.CTkButton(buttons_section_frame, image=excel_image, text_color= "black", text="  Excel     ", fg_color="transparent", width=150)
+        excel_button.grid(row=1, column=1, padx=10, pady=10)
+        excel_button.configure(command=self.excel_button_clicked)
+
+        delete_image = customtkinter.CTkImage(Image.open("images/borrar.png"), size=(26, 26))
+        delete_button = customtkinter.CTkButton(buttons_section_frame, image= delete_image,  text_color= "black", text="  Eliminar", fg_color="transparent", width=150)
+        delete_button.grid(row=2, column=1, padx=10, pady=10)
+        delete_button.configure(command=self.delete_button_clicked)
+
+        filter_image = customtkinter.CTkImage(Image.open("images/filtrar.png"), size=(26, 26))
+        filter_button = customtkinter.CTkButton(buttons_section_frame, image= filter_image,  text_color= "black", text="Filtrar", fg_color="transparent", width=150)
         filter_button.grid(row=3, column=0, padx=10, pady=10)
-        filter_button.config(command=self.filter_button_clicked)
+        filter_button.configure(command=self.filter_button_clicked)
 
-        clean_button = ttk.Button(buttons_section_frame, text="Limpiar")
-        clean_button.grid(row=3, column=1, padx=5, pady=10)
-        clean_button.config(command=self.clear_button_clicked)
+        clean_image = customtkinter.CTkImage(Image.open("images/limpiar.png"), size=(26, 26))
+        clean_button = customtkinter.CTkButton(buttons_section_frame, image= clean_image,  text_color= "black", text="  Limpiar ", fg_color="transparent", width=150)
+        clean_button.grid(row=3, column=1, padx=10, pady=10)
+        clean_button.configure(command=self.clear_button_clicked)
 
         # Crear un calendario de fecha de inicio
-        start_date_label = ttk.Label(buttons_section_frame, text="Fecha inicio:")
-        start_date_label.grid(row=4, column=0, padx=5, pady=10)
-        self.start_cal = DateEntry(buttons_section_frame, width=8, date_pattern="yy/MM/dd")
-        self.start_cal.grid(row=5, column=0, padx=5, pady=10)
+        start_date_label = customtkinter.CTkLabel(buttons_section_frame, font=('Calibri', 15,'bold') , text="Fecha inicio:")
+        start_date_label.grid(row=4, column=0, padx=10, pady=10)
+        self.start_cal = DateEntry(buttons_section_frame, width=8, font=('Calibri', 12), date_pattern="yy/MM/dd")
+        self.start_cal.grid(row=5, column=0, padx=10, pady=10)
 
         # Crear un calendario de fecha de finalización
-        end_date_label = ttk.Label(buttons_section_frame, text="Fecha final:")
-        end_date_label.grid(row=4, column=1, padx=5, pady=10)
-        self.end_cal = DateEntry(buttons_section_frame, width=8, date_pattern="yy/MM/dd")
-        self.end_cal.grid(row=5, column=1, padx=5, pady=10)
+        end_date_label = customtkinter.CTkLabel(buttons_section_frame, font=('Calibri', 15,'bold') , text="Fecha final:")
+        end_date_label.grid(row=4, column=1, padx=40, pady=10)
+        self.end_cal = DateEntry(buttons_section_frame, width=8, font=('Calibri', 12), date_pattern="yy/MM/dd")
+        self.end_cal.grid(row=5, column=1, padx=40, pady=10)
         
     def show_page(self, page):
         # Calcula el índice de inicio y fin para la página actual
@@ -150,13 +176,19 @@ class App:
             self.table.delete(item)
 
         # Llena la tabla con los datos de la página actual, calculando "Asistentes"
-        for item in self.data[start:end]:
+        for index, item in enumerate(self.data[start:end]):
             id_evento, evento, fecha, hombres, mujeres = item[0], item[1], item[4], item[5], item[6]
+            
+            tag = "even" if index % 2 == 0 else "odd"
+            
             asistentes = hombres + mujeres  # Calcula la suma de asistentes
-            self.table.insert("", "end", values=(id_evento, evento, fecha, asistentes, hombres, mujeres))
+            self.table.insert("", "end", values=(id_evento, evento, fecha, asistentes, hombres, mujeres), tags=(tag,))
+        
+        self.table.tag_configure('odd', background='#FAFAFA')
+        self.table.tag_configure('even', background='#EEEEEE')
 
         # Actualiza la etiqueta de página actual
-        self.page_label.config(text=f"Página: {page + 1}")
+        self.page_label.configure(text=f"Página: {page + 1}")
         # Actualiza la entrada de página
         self.page_entry.delete(0, tk.END)
         self.page_entry.insert(0, str(page + 1))
@@ -210,7 +242,6 @@ class App:
 
     def edit_button_clicked(self):
 
-
         # Obtener la fila seleccionada de la tabla
         selected_item = self.table.selection()
         if selected_item:
@@ -237,69 +268,77 @@ class App:
                 conference_name, speakers_names, location, date, num_men, num_women = event_data
                 
                 # Crear una ventana emergente para editar la información
-                self.edit_window = tk.Toplevel(self.root)
+                self.edit_window = customtkinter.CTkToplevel(self.root)
                 self.edit_window.title("Editar Evento")
-                self.edit_window.geometry("250x425")  # Establecer el tamaño de la ventana
-        
+                self.edit_window.geometry("325x400")  # Establecer el tamaño de la ventana
+                self.edit_window.resizable(False, False)
+                
+                
                 # Personalizar el estilo de la ventana emergente
-                self.edit_window.configure(bg="white")  # Cambiar el fondo a blanco
-                frame = ttk.Frame(self.edit_window)
+                self.edit_window.configure()  # Cambiar el fondo a blanco
+                
+                frame = customtkinter.CTkFrame(self.edit_window, fg_color="transparent")
                 frame.pack(expand=True, fill="both")
         
                 # Etiqueta y entrada para el nombre del evento
-                evento_label = ttk.Label(frame, text="Evento:")
-                evento_label.pack(pady=5)
-                self.evento_entry = ttk.Entry(frame)
+                evento_image = customtkinter.CTkImage(Image.open("images/evento.png"), size=(26, 26))
+                evento_label = customtkinter.CTkLabel(frame, font=('Calibri', 15), text="  Evento:", image=evento_image, compound=tk.LEFT)
+                evento_label.grid(row=0, column=0, padx=10, pady=15, sticky=tk.W)
+                self.evento_entry = customtkinter.CTkEntry(frame, font=('Calibri', 15), width=175)
                 self.evento_entry.insert(0, conference_name)  # Llenar con el valor actual
-                self.evento_entry.pack(pady=5, fill="x")
+                self.evento_entry.grid(row=0, column=1, padx=10, pady=15)
     
-    
+           
                 # Etiqueta y entrada para el nombre de los exponentes
-                exponentes_label = ttk.Label(frame, text="Exponentes:")
-                exponentes_label.pack(pady=5)
-                self.exponentes_entry = ttk.Entry(frame)
+                exponentes_image = customtkinter.CTkImage(Image.open("images/exponente.png"), size=(26, 26))
+                exponentes_label = customtkinter.CTkLabel(frame, font=('Calibri', 15), text="  Exponentes:", image=exponentes_image, compound=tk.LEFT)
+                exponentes_label.grid(row=1, column=0, padx=10, pady=15, sticky=tk.W)
+                self.exponentes_entry = customtkinter.CTkEntry(frame, font=('Calibri', 15), width=175)
                 self.exponentes_entry.insert(0, speakers_names)  # Llenar con el valor actual
-                self.exponentes_entry.pack(pady=5, fill="x")
+                self.exponentes_entry.grid(row=1, column=1, padx=10, pady=15)
     
     
                 # Etiqueta y entrada para la ubicación
-                ubicacion_label = ttk.Label(frame, text="Ubicación:")
-                ubicacion_label.pack(pady=5)
-                self.ubicacion_entry = ttk.Entry(frame)
+                ubicacion_image = customtkinter.CTkImage(Image.open("images/ubicacion.png"), size=(26, 26))
+                ubicacion_label = customtkinter.CTkLabel(frame, font=('Calibri', 15), text="  Ubicación:", image=ubicacion_image, compound=tk.LEFT)
+                ubicacion_label.grid(row=2, column=0, padx=10, pady=15, sticky=tk.W)
+                self.ubicacion_entry = customtkinter.CTkEntry(frame, font=('Calibri', 15), width=175)
                 self.ubicacion_entry.insert(0, location)  # Llenar con el valor actual
-                self.ubicacion_entry.pack(pady=5, fill="x")
+                self.ubicacion_entry.grid(row=2, column=1, padx=10, pady=15)
                 
                 # Etiqueta y entrada para la fecha
-                fecha_label = ttk.Label(frame, text="Fecha:")
-                fecha_label.pack(pady=5)
-                self.fecha_entry = ttk.Entry(frame)
+                fecha_image = customtkinter.CTkImage(Image.open("images/fecha.png"), size=(26, 26))
+                fecha_label = customtkinter.CTkLabel(frame, font=('Calibri', 15), text="  Fecha:", image=fecha_image, compound=tk.LEFT)
+                fecha_label.grid(row=3, column=0, padx=10, pady=15, sticky=tk.W)
+                self.fecha_entry = customtkinter.CTkEntry(frame, font=('Calibri', 15), width=175)
                 self.fecha_entry.insert(0, date)  # Llenar con el valor actual
-                self.fecha_entry.pack(pady=5, fill="x")
+                self.fecha_entry.grid(row=3, column=1, padx=10, pady=15)
     
                 # Etiqueta y entrada para la cantidad de hombres
-                hombres_label = ttk.Label(frame, text="Hombres:")
-                hombres_label.pack(pady=5)
-                self.hombres_entry = ttk.Entry(frame)
+                hombres_image = customtkinter.CTkImage(Image.open("images/hombre.png"), size=(26, 26))
+                hombres_label = customtkinter.CTkLabel(frame, font=('Calibri', 15 ), text="  Hombres:", image=hombres_image, compound=tk.LEFT)
+                hombres_label.grid(row=4, column=0, padx=10, pady=15, sticky=tk.W)
+                self.hombres_entry = customtkinter.CTkEntry(frame, font=('Calibri', 15), width=175)
                 self.hombres_entry.insert(0, num_men)  # Llenar con el valor actual
-                self.hombres_entry.pack(pady=5, fill="x")
+                self.hombres_entry.grid(row=4, column=1, padx=10, pady=15)
     
                 # Etiqueta y entrada para la cantidad de mujeres
-                mujeres_label = ttk.Label(frame, text="Mujeres:")
-                mujeres_label.pack(pady=5)
-                self.mujeres_entry = ttk.Entry(frame)
+                mujeres_image = customtkinter.CTkImage(Image.open("images/mujer.png"), size=(26, 26))
+                mujeres_label = customtkinter.CTkLabel(frame, font=('Calibri', 15), text="  Mujeres:", image=mujeres_image, compound=tk.LEFT)
+                mujeres_label.grid(row=5, column=0, padx=10, pady=15, sticky=tk.W)
+                self.mujeres_entry = customtkinter.CTkEntry(frame, font=('Calibri', 15), width=175)
                 self.mujeres_entry.insert(0, num_women)  # Llenar con el valor actual
-                self.mujeres_entry.pack(pady=5, fill="x")
+                self.mujeres_entry.grid(row=5, column=1, padx=10, pady=15)
 
         
                 # Agregar un botón para guardar los cambios
-                save_button = ttk.Button(frame, text="Guardar", command=self.save_changes(evento_id))
-                save_button.pack(pady=10)
-        
+                save_image = customtkinter.CTkImage(Image.open("images/guardar.png"), size=(26, 26))
+                save_button = customtkinter.CTkButton(frame, text="Guardar", width=175, image= save_image, text_color= "black", fg_color="transparent", command=lambda: self.save_changes(evento_id))
+                save_button.grid(row=6, column=1, padx=0, pady=0)
+              
             except sqlite3.Error as e:
                 # Si ocurre un error al conectar o insertar datos, se capturará aquí
                 print("Error al conectar a la base de datos o insertar datos:", e)
-  
-    
   
     
   
@@ -356,8 +395,27 @@ class App:
             # Hacer que la ventana de edición parpadee
             self.flash_edit_window()
             return
-       
         
+        try:
+            # Validar que los campos evento y exponentes solo contengan letras del abecedario
+            if not self.validar_texto(evento):
+                # Mostrar un mensaje de error
+                tk.messagebox.showerror("Error", "El campo 'Evento' solo debe contener letras del abecedario.")
+                # Hacer que la ventana de edición parpadee
+                self.flash_edit_window()
+                return
+            
+            if not self.validar_texto(exponentes):
+                # Mostrar un mensaje de error
+                tk.messagebox.showerror("Error", "El campo 'Exponentes' solo debe contener letras del abecedario.")
+                # Hacer que la ventana de edición parpadee
+                self.flash_edit_window()
+                return
+            
+        except ValueError:
+            # Mostrar un mensaje de error
+            tk.messagebox.showerror("Error", "Los campos 'Evento' y 'Exponentes' solo debe contener letras del abecedario.")
+
         # Actualizar la base de datos con los nuevos valores
         try:
             conn = sqlite3.connect("database/eventos.db")
@@ -381,7 +439,17 @@ class App:
         self.show_page(self.current_page)
         # Cerrar la ventana emergente de edición
         self.edit_window.destroy()
-    
+
+
+
+    def validar_texto(self, texto):
+        # Patrón de expresión regular que permite letras, espacios y apóstrofes (si es necesario)
+        patron = r'^[A-Za-z\s\'À-ÖØ-öø-ÿ]+$'
+        if not re.match(patron, texto):
+            return False
+        return True
+
+
     def flash_edit_window(self):
         # Hacer que la ventana de edición parpadee
         self.edit_window.iconify()  # Ocultar la ventana de edición
@@ -397,42 +465,47 @@ class App:
             values = selected_row['values']
             
             # Crear una ventana emergente para confirmar la eliminación
-            self.delete_window = tk.Toplevel(self.root)
+            self.delete_window = customtkinter.CTkToplevel(self.root)
             self.delete_window.title("Eliminar Evento")
-            self.delete_window.geometry("200x300")  # Establecer el tamaño de la ventana
+            self.delete_window.geometry("325x300")  # Establecer el tamaño de la ventana
+            self.delete_window.resizable(False, False)
     
             # Personalizar el estilo de la ventana emergente
-            self.delete_window.configure(bg="white")  # Cambiar el fondo a blanco
+            self.delete_window.configure()  # Cambiar el fondo a blanco
     
             # Agregar un marco para un diseño más elegante
-            frame = ttk.Frame(self.delete_window)
+            frame = customtkinter.CTkFrame(self.delete_window, fg_color="transparent")
             frame.pack(expand=True, fill="both")
             
             self.evento_id=values[0]
-            evento_label = ttk.Label(frame, text="Evento:")
-            evento_label.pack(pady=5)
-            evento_value_label = ttk.Label(frame, text=values[1])
-            evento_value_label.pack(pady=5)
+            evento_image = customtkinter.CTkImage(Image.open("images/evento.png"), size=(26, 26))
+            evento_label = customtkinter.CTkLabel(frame, font=('Calibri', 15), text="  Evento:", image=evento_image, compound=tk.LEFT)
+            evento_label.grid(row=0, column=0, padx=10, pady=15, sticky=tk.W)
+            evento_value_label = customtkinter.CTkLabel(frame, text=values[1], font=('Calibri', 15), width=175, fg_color="white", corner_radius= 8)
+            evento_value_label.grid(row=0, column=1, padx=10, pady=15)
     
-            fecha_label = ttk.Label(frame, text="Fecha:")
-            fecha_label.pack(pady=5)
-            fecha_value_label = ttk.Label(frame, text=values[2])
-            fecha_value_label.pack(pady=5)
+            fecha_image = customtkinter.CTkImage(Image.open("images/fecha.png"), size=(26, 26))
+            fecha_label = customtkinter.CTkLabel(frame, font=('Calibri', 15), text="  Fecha:", image=fecha_image, compound=tk.LEFT)
+            fecha_label.grid(row=3, column=0, padx=10, pady=15, sticky=tk.W)
+            fecha_value_label = customtkinter.CTkLabel(frame, text=values[2], font=('Calibri', 15), width=175, fg_color="white", corner_radius= 8)
+            fecha_value_label.grid(row=3, column=1, padx=10, pady=15)
     
-    
-            hombres_label = ttk.Label(frame, text="Hombres:")
-            hombres_label.pack(pady=5)
-            hombres_value_label = ttk.Label(frame, text=values[4])
-            hombres_value_label.pack(pady=5)
-    
-            mujeres_label = ttk.Label(frame, text="Mujeres:")
-            mujeres_label.pack(pady=5)
-            mujeres_value_label = ttk.Label(frame, text=values[5])
-            mujeres_value_label.pack(pady=5)
+            hombres_image = customtkinter.CTkImage(Image.open("images/hombre.png"), size=(26, 26))
+            hombres_label = customtkinter.CTkLabel(frame, font=('Calibri', 15 ), text="  Hombres:", image=hombres_image, compound=tk.LEFT)
+            hombres_label.grid(row=4, column=0, padx=10, pady=15, sticky=tk.W)
+            hombres_value_label = customtkinter.CTkLabel(frame, text=values[4], font=('Calibri', 15), width=175, fg_color="white", corner_radius= 8)
+            hombres_value_label.grid(row=4, column=1, padx=10, pady=15)
+            
+            mujeres_image = customtkinter.CTkImage(Image.open("images/mujer.png"), size=(26, 26))
+            mujeres_label = customtkinter.CTkLabel(frame, font=('Calibri', 15), text="  Mujeres:", image=mujeres_image, compound=tk.LEFT)
+            mujeres_label.grid(row=5, column=0, padx=10, pady=15, sticky=tk.W)
+            mujeres_value_label = customtkinter.CTkLabel(frame, text=values[5], font=('Calibri', 15), width=175, fg_color="white", corner_radius= 8)
+            mujeres_value_label.grid(row=5, column=1, padx=10, pady=15)
     
             # Agregar un botón para confirmar la eliminación
-            delete_button = ttk.Button(frame, text="Eliminar", command=self.confirm_delete)
-            delete_button.pack(pady=10)
+            delete_image = customtkinter.CTkImage(Image.open("images/borrar.png"), size=(26, 26))
+            delete_button = customtkinter.CTkButton(frame, image= delete_image,  text_color= "black", text="Eliminar", fg_color="transparent", command=self.confirm_delete)
+            delete_button.grid(row=6, column=1, padx=0, pady=0)
 
     def confirm_delete(self):
 
@@ -505,6 +578,12 @@ class App:
         self.fill_data_from_database()
         self.show_page(self.current_page)
 
+    def recharge_button_clicked(self):
+        # Restablecer las fechas a sus valores originales
+        self.fill_data_from_database()
+        self.show_page(self.current_page)
+
+
     def go_to_page(self):
         try:
             page = int(self.page_entry.get()) - 1  # Restamos 1 porque las páginas se cuentan desde 1
@@ -531,7 +610,7 @@ class App:
                 
                 # Agregar datos de la tabla a la hoja de Excel
                 for row_data in self.data:
-                    evento, fecha, hombres, mujeres = row_data[1], row_data[2], row_data[3], row_data[4]
+                    evento, fecha, hombres, mujeres = row_data[1], row_data[4], row_data[5], row_data[6]
                     asistentes = hombres + mujeres
                     row = [evento, fecha, asistentes, hombres, mujeres]
                     sheet.append(row)
@@ -543,8 +622,6 @@ class App:
             except Exception as e:
                 tk.messagebox.showerror("Error", f"Error al exportar a Excel: {str(e)}")
 
-
-
     def pdf_button_clicked(self):
         selected_item = self.table.selection()
         if selected_item:
@@ -554,28 +631,26 @@ class App:
             id = values[0]
             FileMaker.create_pdf_report(id)
 
-
-
     def open_photo_load_page(self):
         # Cuando se presione el botón "Agregar", crea una instancia de PhotoLoadPage
         self.root.iconify()
-        photo_load_page = PhotoLoadPage(self.root) 
+        photo_load_page = PhotoLoadPage(self, self.root) 
     
-       
 
     def run(self):
         self.root.mainloop()
 
 
 
+        """
 
+        pdf_image = customtkinter.CTkImage(Image.open("images/pdf.png"), size=(26, 26))
+        pdf_button = customtkinter.CTkButton(buttons_section_frame, image= pdf_image, text="  PDF", fg_color="transparent",  width=10)
+        pdf_button.grid(row=0, column=1, padx=25, sticky=tk.W)
+        pdf_button.configure(command=self.pdf_button_clicked)
+        
+        excel_image = customtkinter.CTkImage(Image.open("images/excel.png"), size=(26, 26))
+        excel_button = customtkinter.CTkButton(buttons_section_frame, image=excel_image, text="  Excel", fg_color="transparent",  width=10)
+        excel_button.grid(row=0, column=1, padx=75)
+        excel_button.configure(command=self.excel_button_clicked)ç
 """
-
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = App(root)
-    root.mainloop()
-"""
-
-
-
